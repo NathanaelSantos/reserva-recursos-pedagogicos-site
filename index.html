@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reserva de Recursos Pedagógicos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="school-mark" aria-hidden="true">CEP</span>
+        <div>
+          <h1>Reserva de Recursos Pedagógicos</h1>
+          <p>CEP Itabaiana</p>
+        </div>
+      </div>
+
+      <div class="session-panel">
+        <div class="session-card">
+          <span>Sessão</span>
+          <strong id="currentUserLabel">Aguardando acesso</strong>
+        </div>
+        <button class="button ghost" id="loginButton" type="button">Entrar</button>
+        <button class="button primary hidden" id="adminButton" type="button">Área da coordenação</button>
+      </div>
+    </header>
+
+    <main id="mainScreen" class="layout">
+      <section class="toolbar" aria-label="Controles da agenda">
+        <div class="month-controls">
+          <button class="icon-button" id="prevMonth" type="button" aria-label="Mês anterior">&lt;</button>
+          <label class="field">
+            <span>Mês</span>
+            <select id="monthSelect"></select>
+          </label>
+          <label class="field year-field">
+            <span>Ano</span>
+            <input id="yearInput" type="number" min="2020" max="2100" />
+          </label>
+          <button class="icon-button" id="nextMonth" type="button" aria-label="Próximo mês">&gt;</button>
+          <button class="button" id="todayButton" type="button">Hoje</button>
+        </div>
+
+        <label class="field search-field">
+          <span>Buscar recurso</span>
+          <input id="searchInput" type="search" placeholder="Ex.: datashow, 102, informática" />
+        </label>
+      </section>
+
+      <section class="status-row" aria-label="Legenda">
+        <span><i class="swatch available"></i>Disponível</span>
+        <span><i class="swatch reserved"></i>Reservado</span>
+        <span><i class="swatch mine"></i>Minha reserva</span>
+        <span><i class="swatch blocked"></i>Sem permissão para cancelar</span>
+      </section>
+
+      <section class="board-wrap" aria-live="polite">
+        <div id="board" class="board"></div>
+      </section>
+    </main>
+
+    <dialog id="reservationDialog" class="modal">
+      <form id="reservationForm" method="dialog">
+        <div class="modal-head">
+          <div>
+            <p id="slotEyebrow" class="eyebrow"></p>
+            <h2 id="slotTitle">Reserva</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="Fechar">x</button>
+        </div>
+
+        <div id="currentBooking" class="booking-card hidden"></div>
+
+        <div id="reservationFields" class="form-grid">
+          <div class="field">
+            <span>Professor</span>
+            <div id="teacherName" class="readonly-value" aria-live="polite"></div>
+          </div>
+          <label class="field">
+            <span>Curso ou turma</span>
+            <input id="courseName" name="courseName" placeholder="Opcional" />
+          </label>
+          <label class="field span-2">
+            <span>Observação</span>
+            <textarea id="reservationNote" name="reservationNote" rows="3" placeholder="Opcional"></textarea>
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="button ghost" type="button" data-close-dialog>Fechar</button>
+          <button class="button danger hidden" id="cancelReservation" type="button">Cancelar reserva</button>
+          <button class="button primary" id="saveReservation" type="submit">Reservar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="loginDialog" class="modal small">
+      <form id="loginForm" method="dialog">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Acesso</p>
+            <h2>Entrar no sistema</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="Fechar">x</button>
+        </div>
+        <label class="field">
+          <span>E-mail</span>
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="seu.email@escola.com" required />
+        </label>
+        <label class="field" id="loginPinField">
+          <span>PIN ou senha numérica</span>
+          <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" required />
+        </label>
+        <div class="modal-actions">
+          <button class="button ghost" type="button" data-close-dialog>Cancelar</button>
+          <button class="button primary" type="submit">Entrar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="passwordSetupDialog" class="modal small">
+      <form id="passwordSetupForm" method="dialog">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Primeiro acesso</p>
+            <h2>Criar senha numérica</h2>
+          </div>
+        </div>
+        <label class="field">
+          <span>Nova senha</span>
+          <input id="newPassword" type="password" inputmode="numeric" pattern="[0-9]{4,8}" autocomplete="new-password" required />
+        </label>
+        <label class="field">
+          <span>Confirmar senha</span>
+          <input id="confirmPassword" type="password" inputmode="numeric" pattern="[0-9]{4,8}" autocomplete="new-password" required />
+        </label>
+        <p class="form-help">Use apenas números, com 4 a 8 dígitos.</p>
+        <div class="modal-actions">
+          <button class="button primary" type="submit">Salvar senha</button>
+        </div>
+      </form>
+    </dialog>
+
+    <section id="adminScreen" class="admin-screen hidden" aria-label="Área da coordenação pedagógica">
+      <div class="admin-shell">
+        <header class="admin-header">
+          <div>
+            <p class="eyebrow">Coordenação pedagógica</p>
+            <h2>Administração do sistema</h2>
+          </div>
+          <button class="button ghost" id="backToSchedule" type="button">Voltar para reservas</button>
+        </header>
+
+        <section class="admin-card">
+          <div class="admin-card-head">
+            <div>
+              <p class="eyebrow">Permissões</p>
+              <h3>Cadastrar professores</h3>
+            </div>
+          </div>
+          <form id="userForm" method="dialog">
+            <div class="form-grid admin-form">
+              <label class="field">
+                <span>Nome</span>
+                <input id="newUserName" required />
+              </label>
+              <label class="field">
+                <span>E-mail</span>
+                <input id="newUserEmail" type="email" required />
+              </label>
+              <label class="field">
+                <span>Perfil</span>
+                <input id="newUserRole" type="hidden" value="professor" />
+                <div class="readonly-value">Professor</div>
+              </label>
+              <label class="field">
+                <span>PIN inicial</span>
+                <input id="newUserPin" inputmode="numeric" placeholder="Temporário para primeiro acesso" />
+              </label>
+              <div class="resource-form-actions">
+                <button class="button primary" id="userSubmitButton" type="submit">Adicionar professor</button>
+                <button class="button ghost hidden" id="cancelUserEdit" type="button">Cancelar edição</button>
+              </div>
+            </div>
+          </form>
+          <div class="table-panel">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Permissão</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="admin-card">
+          <div class="admin-card-head">
+            <div>
+              <p class="eyebrow">Patrimônio</p>
+              <h3>Recursos reserváveis</h3>
+            </div>
+            <button class="button ghost" id="printResourcesButton" type="button">Imprimir todos</button>
+          </div>
+          <form id="resourceForm" method="dialog">
+            <div class="form-grid admin-form">
+              <label class="field">
+                <span>Nome</span>
+                <input id="newResourceName" required />
+              </label>
+              <label class="field">
+                <span>Grupo</span>
+                <select id="newResourceGroup">
+                  <option>Equipamentos</option>
+                  <option>Ambientes</option>
+                  <option>Laboratórios</option>
+                  <option>Salas</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Tipo</span>
+                <select id="newResourceType">
+                  <option value="equipamento">Equipamento</option>
+                  <option value="laboratorio">Laboratório</option>
+                  <option value="sala">Sala</option>
+                  <option value="ambiente">Ambiente</option>
+                </select>
+              </label>
+              <label class="field span-2">
+                <span>Descrição</span>
+                <input id="newResourceDetails" placeholder="Patrimônio, cadeiras, observações" />
+              </label>
+              <div class="resource-form-actions">
+                <button class="button primary" id="resourceSubmitButton" type="submit">Adicionar recurso</button>
+                <button class="button ghost hidden" id="cancelResourceEdit" type="button">Cancelar edição</button>
+              </div>
+            </div>
+          </form>
+          <div class="table-panel">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>Recurso</th>
+                  <th>Grupo</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="resourcesTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="admin-card danger-zone">
+          <div>
+            <p class="eyebrow">Área de risco</p>
+            <h3>Limpar agenda</h3>
+            <p>Remove todas as reservas da grade. Usuários e recursos cadastrados continuam salvos.</p>
+          </div>
+          <button class="button danger" id="deleteAllReservationsButton" type="button">Deletar todas as reservas</button>
+        </section>
+      </div>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <section id="printArea" class="print-area" aria-hidden="true"></section>
+    <script src="script.js"></script>
+  </body>
+</html>
