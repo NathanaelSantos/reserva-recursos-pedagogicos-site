@@ -81,20 +81,24 @@ button {
 
 .brand {
   flex: 0 0 auto;
-  min-width: 120px;
+  min-width: 280px;
 }
 
 .brand-logo {
   display: block;
-  height: 72px;
-  max-width: 42vw;
+  height: 64px;
+  max-width: 150px;
   object-fit: contain;
   width: auto;
 }
 
+.brand-title {
+  min-width: 0;
+}
+
 .brand h1 {
   color: white;
-  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
   line-height: 1.15;
   margin: 0;
 }
@@ -876,6 +880,16 @@ button {
   .session-panel,
   .month-controls {
     justify-content: flex-start;
+  }
+
+  .brand {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .brand-logo {
+    height: 54px;
+    max-width: 125px;
   }
 
   .danger-zone,
