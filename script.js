@@ -241,10 +241,9 @@ function bindEvents() {
   els.loginButton.addEventListener("click", () => els.loginDialog.showModal());
   els.loginForm.addEventListener("submit", handleLogin);
   els.passwordSetupForm.addEventListener("submit", handlePasswordSetup);
-  els.passwordSetupDialog.addEventListener("cancel", (event) => {
+  els.passwordSetupDialog.addEventListener("close", () => {
     if (requiresPasswordSetup()) {
-      event.preventDefault();
-      showToast("Cadastre sua senha numérica para continuar.");
+      els.passwordSetupForm.reset();
     }
   });
   els.adminButton.addEventListener("click", openAdminScreen);
