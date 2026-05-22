@@ -179,10 +179,7 @@ function usesRemoteApi() {
 async function loadRemoteData() {
   try {
     const data = await api("load", {});
-    state.users = data.users || [];
-    state.resources = data.resources || [];
-    state.reservations = data.reservations || [];
-    state.currentUser = data.currentUser || null;
+    applyRemoteData(data);
   } catch (error) {
     state.token = "";
     localStorage.removeItem(TOKEN_KEY);
@@ -196,6 +193,13 @@ function loadSignedOutRemoteState() {
   state.resources = structuredClone(DEFAULT_RESOURCES);
   state.reservations = [];
   state.currentUser = null;
+}
+
+function applyRemoteData(data) {
+  state.users = data.users || [];
+  state.resources = data.resources || [];
+  state.reservations = data.reservations || [];
+  state.currentUser = data.currentUser || data.user || null;
 }
 
 async function api(action, payload) {
@@ -578,7 +582,11 @@ async function handleLogin(event) {
     });
     state.token = data.token;
     localStorage.setItem(TOKEN_KEY, data.token);
-    await loadRemoteData();
+    if (hasRemoteData(data)) {
+      applyRemoteData(data);
+    } else {
+      await loadRemoteData();
+    }
     els.loginDialog.close();
     els.loginForm.reset();
     closeAdminScreen();
@@ -591,6 +599,10 @@ async function handleLogin(event) {
   } catch (error) {
     showToast(error.message || "Login inválido.");
   }
+}
+
+function hasRemoteData(data) {
+  return Array.isArray(data.resources) && Array.isArray(data.reservations);
 }
 
 async function handlePasswordSetup(event) {
