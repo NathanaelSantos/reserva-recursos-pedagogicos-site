@@ -64,7 +64,7 @@ button {
   display: flex;
   gap: 20px;
   justify-content: space-between;
-  padding: 16px 22px;
+  padding: 8px 22px;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -79,16 +79,17 @@ button {
   gap: 12px;
 }
 
-.school-mark {
-  align-items: center;
-  background: var(--accent);
-  color: white;
-  display: inline-flex;
-  font-weight: 800;
-  height: 42px;
-  justify-content: center;
-  letter-spacing: 0;
-  width: 42px;
+.brand {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.brand-logo {
+  display: block;
+  height: 72px;
+  max-width: 42vw;
+  object-fit: contain;
+  width: auto;
 }
 
 .brand h1 {
