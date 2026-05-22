@@ -1,13 +1,16 @@
 :root {
-  --paper: #f4f7fb;
+  --paper: #ffa300;
   --surface: #ffffff;
   --surface-strong: #eef6f4;
   --ink: #17202a;
   --muted: #64748b;
   --line: #94a3b8;
   --line-soft: #d6dee9;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
+  --accent: #008b84;
+  --accent-strong: #006f6a;
+  --brand-blue: #0800c8;
+  --brand-blue-strong: #050096;
+  --page-orange: #ffa300;
   --amber: #d97706;
   --danger: #dc2626;
   --violet: #4f46e5;
@@ -54,9 +57,10 @@ button {
 
 .topbar {
   align-items: center;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line-soft);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  background: var(--brand-blue);
+  border-bottom: 0;
+  box-shadow: none;
+  color: white;
   display: flex;
   gap: 20px;
   justify-content: space-between;
@@ -88,6 +92,7 @@ button {
 }
 
 .brand h1 {
+  color: white;
   font-size: clamp(1.05rem, 2vw, 1.45rem);
   line-height: 1.15;
   margin: 0;
@@ -103,14 +108,18 @@ button {
   text-transform: uppercase;
 }
 
+.topbar .brand p {
+  color: #8ab8ff;
+}
+
 .session-panel {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .session-card {
-  background: #f8fafc;
-  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.92);
   display: grid;
   gap: 2px;
   min-height: 38px;
@@ -127,6 +136,7 @@ button {
 }
 
 .session-card strong {
+  color: #17202a;
   font-size: 0.86rem;
   line-height: 1.15;
 }
@@ -193,9 +203,21 @@ button {
 .toolbar {
   align-items: end;
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 24px;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.month-controls {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.month-controls .field {
+  flex: 0 0 auto;
 }
 
 .field {
@@ -204,7 +226,7 @@ button {
 }
 
 .field span {
-  color: var(--muted);
+  color: #075fae;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -217,7 +239,8 @@ button {
   background: white;
   border: 1px solid var(--line-soft);
   color: var(--ink);
-  min-height: 38px;
+  height: 40px;
+  min-height: 40px;
   min-width: 0;
   padding: 8px 10px;
 }
@@ -246,12 +269,21 @@ button {
   min-width: 190px;
 }
 
+#monthSelect {
+  width: 118px;
+}
+
+#todayButton {
+  min-width: 66px;
+}
+
 .year-field input {
-  width: 92px;
+  width: 94px;
 }
 
 .search-field {
   min-width: min(360px, 100%);
+  width: min(360px, 100%);
 }
 
 .button,
@@ -261,7 +293,8 @@ button {
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
-  min-height: 38px;
+  height: 40px;
+  min-height: 40px;
   padding: 8px 13px;
 }
 
@@ -284,6 +317,15 @@ button {
   background: transparent;
 }
 
+.topbar .button.ghost {
+  border-color: rgba(255, 255, 255, 0.85);
+  color: white;
+}
+
+.topbar .button.ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .button.danger {
   background: var(--danger);
   border-color: var(--danger);
@@ -294,9 +336,9 @@ button {
   background: var(--surface);
   color: var(--ink);
   font-size: 1rem;
-  height: 38px;
+  height: 40px;
   padding: 0;
-  width: 38px;
+  width: 40px;
 }
 
 .button:disabled,
@@ -306,7 +348,7 @@ button {
 }
 
 .status-row {
-  color: var(--muted);
+  color: #0f4a6b;
   flex-wrap: wrap;
   font-size: 0.86rem;
   margin: 0 0 12px;
