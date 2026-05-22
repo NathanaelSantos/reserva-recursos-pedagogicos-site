@@ -939,7 +939,7 @@ function findBooking(resourceId, date, shift) {
   return state.reservations.find(
     (booking) =>
       booking.resourceId === resourceId &&
-      booking.date === date &&
+      dateKey(booking.date) === date &&
       booking.shift === shift &&
       booking.status !== "cancelled"
   );
@@ -1001,6 +1001,21 @@ function formatDate(dateKey) {
 
 function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function dateKey(value) {
+  if (value instanceof Date) return toDateKey(value);
+
+  const text = String(value || "").trim();
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+  const brMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (brMatch) {
+    return `${brMatch[3]}-${brMatch[2].padStart(2, "0")}-${brMatch[1].padStart(2, "0")}`;
+  }
+
+  return text;
 }
 
 function isToday(date) {
