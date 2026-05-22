@@ -146,7 +146,7 @@
       <div class="admin-shell">
         <header class="admin-header">
           <div>
-            <p class="eyebrow">Coordenação pedagógica</p>
+            <p class="eyebrow">Administração</p>
             <h2>Administração do sistema</h2>
           </div>
           <button class="button ghost" id="backToSchedule" type="button">Voltar para reservas</button>
@@ -156,7 +156,7 @@
           <div class="admin-card-head">
             <div>
               <p class="eyebrow">Permissões</p>
-              <h3>Cadastrar professores</h3>
+              <h3>Cadastrar usuários</h3>
             </div>
           </div>
           <form id="userForm" method="dialog">
@@ -171,15 +171,17 @@
               </label>
               <label class="field">
                 <span>Perfil</span>
-                <input id="newUserRole" type="hidden" value="professor" />
-                <div class="readonly-value">Professor</div>
+                <select id="newUserRole">
+                  <option value="professor">Professor</option>
+                  <option value="coordenadora">Coordenadora</option>
+                </select>
               </label>
               <label class="field">
                 <span>PIN inicial</span>
                 <input id="newUserPin" inputmode="numeric" placeholder="Temporário para primeiro acesso" />
               </label>
               <div class="resource-form-actions">
-                <button class="button primary" id="userSubmitButton" type="submit">Adicionar professor</button>
+                <button class="button primary" id="userSubmitButton" type="submit">Adicionar usuário</button>
                 <button class="button ghost hidden" id="cancelUserEdit" type="button">Cancelar edição</button>
               </div>
             </div>

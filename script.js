@@ -291,7 +291,7 @@ function renderSession() {
 }
 
 function renderAdminAccess() {
-  els.adminButton.classList.toggle("hidden", !isCoordinator());
+  els.adminButton.classList.toggle("hidden", !isAdmin());
 }
 
 function renderBoard() {
@@ -536,8 +536,8 @@ async function handleCancelReservation() {
 }
 
 async function handleDeleteAllReservations() {
-  if (!isCoordinator()) {
-    showToast("Apenas coordenadoras pedagógicas podem limpar a agenda.");
+  if (!isAdmin()) {
+    showToast("Apenas master ou coordenadoras podem limpar a agenda.");
     return;
   }
   if (requiresPasswordSetup()) {
@@ -629,12 +629,12 @@ async function handlePasswordSetup(event) {
 
 async function handleUserSubmit(event) {
   event.preventDefault();
-  if (!isCoordinator()) return;
+  if (!isAdmin()) return;
 
   const editingId = state.editingUserId;
   const pin = els.newUserPin.value.trim();
   if (!editingId && !pin) {
-    showToast("Informe um PIN inicial para o professor.");
+    showToast("Informe um PIN inicial para o usuário.");
     return;
   }
 
@@ -656,13 +656,13 @@ async function handleUserSubmit(event) {
     renderUsersTable();
     showToast(editingId ? "Professor atualizado." : "Professor adicionado.");
   } catch (error) {
-    showToast(error.message || "Não foi possível salvar professor.");
+    showToast(error.message || "Não foi possível salvar usuário.");
   }
 }
 
 async function handleResourceSubmit(event) {
   event.preventDefault();
-  if (!isCoordinator()) return;
+  if (!isAdmin()) return;
 
   const editingId = state.editingResourceId;
   const item = {
@@ -688,8 +688,8 @@ async function handleResourceSubmit(event) {
 }
 
 function openAdminScreen() {
-  if (!isCoordinator()) {
-    showToast("Apenas coordenadoras pedagógicas podem acessar esta tela.");
+  if (!isAdmin()) {
+    showToast("Apenas master ou coordenadoras podem acessar esta tela.");
     return;
   }
   if (requiresPasswordSetup()) {
@@ -713,7 +713,7 @@ function renderUsersTable() {
   els.usersTable.innerHTML = state.users
     .map(
       (user) => {
-        const canManage = user.role === "professor" && user.active !== false;
+        const canManage = canManageUser(user);
         return `
           <tr>
             <td>${escapeHtml(user.name)}</td>
@@ -750,19 +750,19 @@ function renderUsersTable() {
 
 function startUserEdit(userId) {
   const user = state.users.find((item) => sameId(item.id, userId));
-  if (!user || user.role !== "professor") {
-    showToast("Coordenadoras não podem ser editadas por esta tela.");
+  if (!canManageUser(user)) {
+    showToast("Você não tem permissão para editar este usuário.");
     return;
   }
 
   state.editingUserId = user.id;
   els.newUserName.value = user.name || "";
   els.newUserEmail.value = user.email || "";
-  els.newUserRole.value = "professor";
-  els.newUserRole.disabled = true;
+  els.newUserRole.value = user.role || "professor";
+  els.newUserRole.disabled = !isMaster();
   els.newUserPin.value = "";
   els.newUserPin.placeholder = "Deixe vazio para manter o PIN";
-  els.userSubmitButton.textContent = "Salvar alterações";
+  els.userSubmitButton.textContent = "Salvar usuário";
   els.cancelUserEdit.classList.remove("hidden");
   els.newUserName.focus();
 }
@@ -770,22 +770,23 @@ function startUserEdit(userId) {
 function resetUserForm() {
   state.editingUserId = "";
   els.userForm.reset();
-  els.newUserRole.disabled = false;
+  els.newUserRole.value = "professor";
+  els.newUserRole.disabled = !isMaster();
   els.newUserPin.placeholder = "Temporário para primeiro acesso";
-  els.userSubmitButton.textContent = "Adicionar professor";
+  els.userSubmitButton.textContent = isMaster() ? "Adicionar usuário" : "Adicionar professor";
   els.cancelUserEdit.classList.add("hidden");
 }
 
 async function handleDeleteUser(userId) {
-  if (!isCoordinator()) return;
+  if (!isAdmin()) return;
 
   const user = state.users.find((item) => sameId(item.id, userId));
-  if (!user || user.role !== "professor") {
-    showToast("Coordenadoras não podem ser excluídas por esta tela.");
+  if (!canManageUser(user)) {
+    showToast("Você não tem permissão para excluir este usuário.");
     return;
   }
 
-  const confirmed = window.confirm(`Tem certeza que deseja excluir o professor ${user.name}?`);
+  const confirmed = window.confirm(`Tem certeza que deseja excluir ${roleLabel(user.role).toLowerCase()} ${user.name}?`);
   if (!confirmed) return;
 
   try {
@@ -798,7 +799,7 @@ async function handleDeleteUser(userId) {
     renderUsersTable();
     showToast("Professor excluído.");
   } catch (error) {
-    showToast(error.message || "Não foi possível excluir professor.");
+    showToast(error.message || "Não foi possível excluir usuário.");
   }
 }
 
@@ -909,7 +910,7 @@ function filteredResources() {
 function canBookResource(resourceItem, user = state.currentUser) {
   if (!user) return false;
   if (user.mustChangePin) return false;
-  if (isCoordinator(user)) return true;
+  if (isAdmin(user)) return true;
   if (!resourceItem) return false;
 
   const category = categoryClass(resourceItem.group);
@@ -947,7 +948,7 @@ function findBooking(resourceId, date, shift) {
 
 function canCancelBooking(booking) {
   if (requiresPasswordSetup()) return false;
-  if (isCoordinator()) return true;
+  if (isAdmin()) return true;
   const resourceItem = state.resources.find((item) => item.id === booking.resourceId);
   return sameId(booking.userId, state.currentUser?.id) && canBookResource(resourceItem);
 }
@@ -963,8 +964,19 @@ function promptPasswordSetup() {
   }
 }
 
-function isCoordinator(user = state.currentUser) {
-  return user?.role === "coordenadora";
+function isAdmin(user = state.currentUser) {
+  return user?.role === "master" || user?.role === "coordenadora";
+}
+
+function isMaster(user = state.currentUser) {
+  return user?.role === "master";
+}
+
+function canManageUser(user) {
+  if (!user || user.active === false) return false;
+  if (user.role === "master") return false;
+  if (isMaster()) return user.role === "professor" || user.role === "coordenadora";
+  return user.role === "professor";
 }
 
 function userById(userId) {
@@ -972,6 +984,7 @@ function userById(userId) {
 }
 
 function roleLabel(role) {
+  if (role === "master") return "Master";
   return role === "coordenadora" ? "Coordenadora" : "Professor";
 }
 
