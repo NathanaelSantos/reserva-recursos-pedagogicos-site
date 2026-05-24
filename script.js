@@ -77,6 +77,7 @@ const state = {
   selectedSlot: null,
   editingUserId: "",
   editingResourceId: "",
+  selectedUserReservationsId: "",
   token: localStorage.getItem(TOKEN_KEY) || ""
 };
 
@@ -122,6 +123,9 @@ const els = {
   userSubmitButton: document.querySelector("#userSubmitButton"),
   cancelUserEdit: document.querySelector("#cancelUserEdit"),
   usersTable: document.querySelector("#usersTable"),
+  userReservationsTitle: document.querySelector("#userReservationsTitle"),
+  userReservationsSummary: document.querySelector("#userReservationsSummary"),
+  userReservationsList: document.querySelector("#userReservationsList"),
   printResourcesButton: document.querySelector("#printResourcesButton"),
   resourceForm: document.querySelector("#resourceForm"),
   newResourceName: document.querySelector("#newResourceName"),
@@ -279,6 +283,7 @@ function render() {
   renderSession();
   renderAdminAccess();
   renderBoard();
+  renderUserReservationsPanel();
 }
 
 function renderSession() {
@@ -509,6 +514,7 @@ async function handleReservationSubmit(event) {
     state.reservations = data.reservations;
     els.reservationDialog.close();
     renderBoard();
+    renderUserReservationsPanel();
     showToast("Reserva registrada.");
   } catch (error) {
     showToast(error.message || "Não foi possível reservar.");
@@ -532,6 +538,7 @@ async function handleCancelReservation() {
     state.reservations = data.reservations;
     els.reservationDialog.close();
     renderBoard();
+    renderUserReservationsPanel();
     showToast("Reserva cancelada.");
   } catch (error) {
     showToast(error.message || "Não foi possível cancelar.");
@@ -562,6 +569,7 @@ async function handleDeleteAllReservations() {
     state.reservations = data.reservations || [];
 
     renderBoard();
+    renderUserReservationsPanel();
     showToast("Todas as reservas foram deletadas.");
   } catch (error) {
     showToast(error.message || "Não foi possível deletar as reservas.");
@@ -709,7 +717,11 @@ function openAdminScreen() {
   }
   resetUserForm();
   resetResourceForm();
+  if (!state.selectedUserReservationsId && state.currentUser) {
+    state.selectedUserReservationsId = state.currentUser.id;
+  }
   renderUsersTable();
+  renderUserReservationsPanel();
   renderResourcesTable();
   els.mainScreen.classList.add("hidden");
   els.adminScreen.classList.remove("hidden");
@@ -725,6 +737,7 @@ function renderUsersTable() {
     .map(
       (user) => {
         const canManage = canManageUser(user);
+        const isSelected = sameId(user.id, state.selectedUserReservationsId);
         return `
           <tr>
             <td>${escapeHtml(user.name)}</td>
@@ -732,18 +745,27 @@ function renderUsersTable() {
             <td>${roleLabel(user.role)}</td>
             <td>${user.active === false ? "Inativo" : "Ativo"}</td>
             <td>
-              ${
-                canManage
-                  ? `
-                    <button class="button ghost table-button" type="button" data-edit-user="${escapeHtml(user.id)}">
-                      Editar
-                    </button>
-                    <button class="button danger table-button" type="button" data-delete-user="${escapeHtml(user.id)}">
-                      Excluir
-                    </button>
-                  `
-                  : "Protegido"
-              }
+              <div class="table-actions">
+                <button
+                  class="button ghost table-button${isSelected ? " is-active" : ""}"
+                  type="button"
+                  data-view-user-reservations="${escapeHtml(user.id)}"
+                >
+                  Ver reservas
+                </button>
+                ${
+                  canManage
+                    ? `
+                      <button class="button ghost table-button" type="button" data-edit-user="${escapeHtml(user.id)}">
+                        Editar
+                      </button>
+                      <button class="button danger table-button" type="button" data-delete-user="${escapeHtml(user.id)}">
+                        Excluir
+                      </button>
+                    `
+                    : "<span class=\"protected-label\">Protegido</span>"
+                }
+              </div>
             </td>
           </tr>
         `;
@@ -751,12 +773,81 @@ function renderUsersTable() {
     )
     .join("");
 
+  els.usersTable.querySelectorAll("[data-view-user-reservations]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedUserReservationsId = button.dataset.viewUserReservations;
+      renderUsersTable();
+      renderUserReservationsPanel();
+    });
+  });
   els.usersTable.querySelectorAll("[data-edit-user]").forEach((button) => {
     button.addEventListener("click", () => startUserEdit(button.dataset.editUser));
   });
   els.usersTable.querySelectorAll("[data-delete-user]").forEach((button) => {
     button.addEventListener("click", () => handleDeleteUser(button.dataset.deleteUser));
   });
+}
+
+function renderUserReservationsPanel() {
+  if (!els.userReservationsTitle || !els.userReservationsSummary || !els.userReservationsList) return;
+
+  const user = selectedReservationsUser();
+  if (!user) {
+    els.userReservationsTitle.textContent = "Reservas do usuário";
+    els.userReservationsSummary.textContent = "Nenhum usuário selecionado";
+    els.userReservationsList.innerHTML = `<p class="empty-panel">Selecione um usuário para visualizar as reservas.</p>`;
+    return;
+  }
+
+  const bookings = activeReservationsForUser(user.id);
+  els.userReservationsTitle.textContent = `Reservas de ${user.name}`;
+  els.userReservationsSummary.textContent =
+    bookings.length === 1 ? "1 reserva ativa" : `${bookings.length} reservas ativas`;
+  els.userReservationsList.innerHTML = bookings.length
+    ? bookings.map(renderUserReservationItem).join("")
+    : `<p class="empty-panel">Nenhuma reserva ativa para este usuário.</p>`;
+}
+
+function selectedReservationsUser() {
+  if (!state.selectedUserReservationsId) return null;
+
+  const user = state.users.find((item) => sameId(item.id, state.selectedUserReservationsId));
+  if (user) return user;
+
+  if (sameId(state.currentUser?.id, state.selectedUserReservationsId)) {
+    return state.currentUser;
+  }
+
+  state.selectedUserReservationsId = "";
+  return null;
+}
+
+function activeReservationsForUser(userId) {
+  return state.reservations
+    .filter((booking) => sameId(booking.userId, userId) && booking.status !== "cancelled")
+    .sort((left, right) => {
+      const dateCompare = dateKey(left.date).localeCompare(dateKey(right.date));
+      if (dateCompare !== 0) return dateCompare;
+      return shiftIndex(left.shift) - shiftIndex(right.shift);
+    });
+}
+
+function renderUserReservationItem(booking) {
+  const resourceItem = state.resources.find((item) => item.id === booking.resourceId);
+  const resourceName = resourceItem?.name || "Recurso não encontrado";
+  const course = booking.courseName ? `<p>${escapeHtml(booking.courseName)}</p>` : "";
+  const note = booking.note ? `<p>${escapeHtml(booking.note)}</p>` : "";
+
+  return `
+    <article class="user-reservation-row">
+      <div>
+        <strong>${escapeHtml(resourceName)}</strong>
+        <span>${formatDate(dateKey(booking.date))} - ${escapeHtml(shiftLabel(booking.shift))}</span>
+        ${course}
+        ${note}
+      </div>
+    </article>
+  `;
 }
 
 function startUserEdit(userId) {
@@ -1007,6 +1098,15 @@ function typeLabel(type) {
     ambiente: "Ambiente"
   };
   return labels[type] || type;
+}
+
+function shiftLabel(shiftId) {
+  return SHIFTS.find((shift) => shift.id === shiftId)?.label || shiftId;
+}
+
+function shiftIndex(shiftId) {
+  const index = SHIFTS.findIndex((shift) => shift.id === shiftId);
+  return index >= 0 ? index : SHIFTS.length;
 }
 
 function formatDayHeader(date) {

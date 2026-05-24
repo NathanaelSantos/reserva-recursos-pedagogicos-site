@@ -725,6 +725,86 @@ button {
   padding: 6px 10px;
 }
 
+.table-button.is-active {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #075985;
+}
+
+.table-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.protected-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.user-reservations-panel {
+  border-top: 1px solid var(--line-soft);
+  margin: 0 -18px -18px;
+  padding: 18px;
+}
+
+.user-reservations-head {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.user-reservations-head h4 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.reservation-count {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.user-reservations-list {
+  display: grid;
+  gap: 0;
+}
+
+.user-reservation-row {
+  border-top: 1px solid var(--line-soft);
+  padding: 11px 0;
+}
+
+.user-reservation-row:first-child {
+  border-top: 0;
+}
+
+.user-reservation-row strong {
+  display: block;
+  line-height: 1.2;
+}
+
+.user-reservation-row span,
+.user-reservation-row p,
+.empty-panel {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.user-reservation-row span {
+  display: block;
+  margin-top: 3px;
+}
+
+.user-reservation-row p,
+.empty-panel {
+  margin: 4px 0 0;
+}
+
 .modal-actions {
   align-items: center;
   display: flex;
@@ -894,7 +974,8 @@ button {
 
   .danger-zone,
   .admin-header,
-  .admin-card-head {
+  .admin-card-head,
+  .user-reservations-head {
     align-items: stretch;
     flex-direction: column;
   }
