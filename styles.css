@@ -84,14 +84,6 @@ button {
   min-width: 280px;
 }
 
-.brand-logo {
-  display: block;
-  height: 64px;
-  max-width: 150px;
-  object-fit: contain;
-  width: auto;
-}
-
 .brand-title {
   min-width: 0;
 }
@@ -1036,11 +1028,6 @@ button {
   .brand {
     min-width: 0;
     width: 100%;
-  }
-
-  .brand-logo {
-    height: 54px;
-    max-width: 125px;
   }
 
   .danger-zone,
