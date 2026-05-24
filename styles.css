@@ -435,6 +435,16 @@ button {
   z-index: 8;
 }
 
+.booking-grid thead tr:first-child th {
+  top: 0;
+  z-index: 13;
+}
+
+.booking-grid thead tr:nth-child(2) th {
+  top: 58px;
+  z-index: 12;
+}
+
 .booking-grid .resource-head,
 .booking-grid .resource-cell,
 .booking-grid .group-cell {
@@ -445,7 +455,7 @@ button {
 .booking-grid .resource-head {
   min-width: 250px;
   width: 250px;
-  z-index: 12;
+  z-index: 15;
 }
 
 .booking-grid .resource-cell {
