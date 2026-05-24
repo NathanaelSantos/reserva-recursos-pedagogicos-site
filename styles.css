@@ -453,9 +453,12 @@ button {
 }
 
 .booking-grid .resource-head {
+  background: var(--surface-strong);
+  height: 88px !important;
   min-width: 250px;
+  top: 0;
   width: 250px;
-  z-index: 15;
+  z-index: 20;
 }
 
 .booking-grid .resource-cell {
