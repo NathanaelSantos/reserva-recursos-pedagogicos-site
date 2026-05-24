@@ -84,6 +84,7 @@ const state = {
 const els = {
   mainScreen: document.querySelector("#mainScreen"),
   adminScreen: document.querySelector("#adminScreen"),
+  boardWrap: document.querySelector(".board-wrap"),
   board: document.querySelector("#board"),
   currentUserLabel: document.querySelector("#currentUserLabel"),
   myReservationsButton: document.querySelector("#myReservationsButton"),
@@ -353,7 +354,8 @@ function renderBoard() {
   const headerDays = days
     .map((day) => {
       const todayClass = isToday(day) ? " today" : "";
-      return `<th class="day-header${todayClass}" colspan="3">${formatDayHeader(day)}</th>`;
+      const currentDayClass = isCurrentVisibleDay(day) ? " current-day-position" : "";
+      return `<th class="day-header${todayClass}${currentDayClass}" colspan="3">${formatDayHeader(day)}</th>`;
     })
     .join("");
 
@@ -385,6 +387,22 @@ function renderBoard() {
 
   els.board.querySelectorAll("[data-slot]").forEach((button) => {
     button.addEventListener("click", () => openReservation(button.dataset));
+  });
+  scrollBoardToCurrentDay();
+}
+
+function scrollBoardToCurrentDay() {
+  const target = els.board.querySelector(".day-header.current-day-position");
+  if (!target || !els.boardWrap) return;
+
+  window.requestAnimationFrame(() => {
+    const resourceHead = els.board.querySelector(".resource-head");
+    const stickyWidth = resourceHead?.offsetWidth || 0;
+    els.boardWrap.scrollTo({
+      left: Math.max(target.offsetLeft - stickyWidth, 0),
+      top: els.boardWrap.scrollTop,
+      behavior: "auto"
+    });
   });
 }
 
@@ -1191,6 +1209,11 @@ function dateKey(value) {
 function isToday(date) {
   const today = new Date();
   return toDateKey(date) === toDateKey(today);
+}
+
+function isCurrentVisibleDay(date) {
+  const today = new Date();
+  return date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
 }
 
 function clamp(value, min, max) {
