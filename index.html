@@ -16,10 +16,10 @@
       </div>
 
       <div class="session-panel">
-        <div class="session-card">
+        <button class="session-card" id="sessionSummaryButton" type="button">
           <span>Sessão</span>
           <strong id="currentUserLabel">Aguardando acesso</strong>
-        </div>
+        </button>
         <button class="button ghost" id="loginButton" type="button">Entrar</button>
         <button class="button primary hidden" id="adminButton" type="button">Área da coordenação</button>
       </div>
@@ -92,6 +92,26 @@
           <button class="button primary" id="saveReservation" type="submit">Reservar</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="myReservationsDialog" class="modal small">
+      <div class="modal-body">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Sessão</p>
+            <h2>Minhas reservas</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="Fechar">x</button>
+        </div>
+        <div class="user-reservations-head compact-head">
+          <strong id="myReservationsUser">Aguardando acesso</strong>
+          <span id="myReservationsSummary" class="reservation-count">0 reservas ativas</span>
+        </div>
+        <div id="myReservationsList" class="user-reservations-list"></div>
+        <div class="modal-actions">
+          <button class="button ghost" type="button" data-close-dialog>Fechar</button>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="loginDialog" class="modal small">
@@ -283,6 +303,6 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <section id="printArea" class="print-area" aria-hidden="true"></section>
-    <script src="script.js?v=20260524-fix-load"></script>
+    <script src="script.js?v=20260524-session-reservas"></script>
   </body>
 </html>

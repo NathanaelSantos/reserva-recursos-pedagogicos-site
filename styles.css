@@ -130,6 +130,7 @@ button {
   min-height: 38px;
   min-width: 230px;
   padding: 6px 10px;
+  text-align: left;
 }
 
 .session-card span {
@@ -144,6 +145,13 @@ button {
   color: #17202a;
   font-size: 0.86rem;
   line-height: 1.15;
+}
+
+.session-card:hover,
+.session-card:focus-visible {
+  background: white;
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
 }
 
 .layout {
@@ -669,6 +677,7 @@ button {
 }
 
 .modal form,
+.modal-body,
 .table-panel {
   padding: 18px;
 }
@@ -761,6 +770,13 @@ button {
 .user-reservations-head h4 {
   font-size: 1rem;
   margin: 0;
+}
+
+.compact-head {
+  align-items: start;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 0;
+  padding-bottom: 12px;
 }
 
 .reservation-count {

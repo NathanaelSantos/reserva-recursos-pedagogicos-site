@@ -85,6 +85,7 @@ const els = {
   mainScreen: document.querySelector("#mainScreen"),
   adminScreen: document.querySelector("#adminScreen"),
   board: document.querySelector("#board"),
+  sessionSummaryButton: document.querySelector("#sessionSummaryButton"),
   currentUserLabel: document.querySelector("#currentUserLabel"),
   loginButton: document.querySelector("#loginButton"),
   adminButton: document.querySelector("#adminButton"),
@@ -106,6 +107,10 @@ const els = {
   reservationNote: document.querySelector("#reservationNote"),
   saveReservation: document.querySelector("#saveReservation"),
   cancelReservation: document.querySelector("#cancelReservation"),
+  myReservationsDialog: document.querySelector("#myReservationsDialog"),
+  myReservationsUser: document.querySelector("#myReservationsUser"),
+  myReservationsSummary: document.querySelector("#myReservationsSummary"),
+  myReservationsList: document.querySelector("#myReservationsList"),
   loginDialog: document.querySelector("#loginDialog"),
   loginForm: document.querySelector("#loginForm"),
   loginEmail: document.querySelector("#loginEmail"),
@@ -248,6 +253,7 @@ function bindEvents() {
     state.query = els.searchInput.value.trim().toLowerCase();
     renderBoard();
   });
+  els.sessionSummaryButton.addEventListener("click", openMyReservations);
   els.loginButton.addEventListener("click", () => els.loginDialog.showModal());
   els.loginForm.addEventListener("submit", handleLogin);
   els.passwordSetupForm.addEventListener("submit", handlePasswordSetup);
@@ -286,6 +292,7 @@ function render() {
   renderAdminAccess();
   renderBoard();
   renderUserReservationsPanel();
+  renderMyReservationsDialog();
 }
 
 function renderSession() {
@@ -298,6 +305,40 @@ function renderSession() {
   const pending = state.currentUser.mustChangePin ? " - definir senha" : "";
   els.currentUserLabel.textContent = `${state.currentUser.name} - ${roleLabel(state.currentUser.role)}${pending}`;
   els.loginButton.textContent = usesRemoteApi() ? "Trocar acesso" : "Trocar acesso";
+}
+
+function openMyReservations() {
+  if (!state.currentUser) {
+    showToast("Entre no sistema para ver suas reservas.");
+    els.loginDialog.showModal();
+    return;
+  }
+  if (requiresPasswordSetup()) {
+    promptPasswordSetup();
+    return;
+  }
+
+  renderMyReservationsDialog();
+  els.myReservationsDialog.showModal();
+}
+
+function renderMyReservationsDialog() {
+  if (!els.myReservationsUser || !els.myReservationsSummary || !els.myReservationsList) return;
+
+  if (!state.currentUser) {
+    els.myReservationsUser.textContent = "Aguardando acesso";
+    els.myReservationsSummary.textContent = "0 reservas ativas";
+    els.myReservationsList.innerHTML = `<p class="empty-panel">Entre no sistema para visualizar suas reservas.</p>`;
+    return;
+  }
+
+  const bookings = activeReservationsForUser(state.currentUser.id);
+  els.myReservationsUser.textContent = state.currentUser.name;
+  els.myReservationsSummary.textContent =
+    bookings.length === 1 ? "1 reserva ativa" : `${bookings.length} reservas ativas`;
+  els.myReservationsList.innerHTML = bookings.length
+    ? bookings.map(renderUserReservationItem).join("")
+    : `<p class="empty-panel">Você não tem reservas ativas.</p>`;
 }
 
 function renderAdminAccess() {
@@ -517,6 +558,7 @@ async function handleReservationSubmit(event) {
     els.reservationDialog.close();
     renderBoard();
     renderUserReservationsPanel();
+    renderMyReservationsDialog();
     showToast("Reserva registrada.");
   } catch (error) {
     showToast(error.message || "Não foi possível reservar.");
@@ -541,6 +583,7 @@ async function handleCancelReservation() {
     els.reservationDialog.close();
     renderBoard();
     renderUserReservationsPanel();
+    renderMyReservationsDialog();
     showToast("Reserva cancelada.");
   } catch (error) {
     showToast(error.message || "Não foi possível cancelar.");
@@ -572,6 +615,7 @@ async function handleDeleteAllReservations() {
 
     renderBoard();
     renderUserReservationsPanel();
+    renderMyReservationsDialog();
     showToast("Todas as reservas foram deletadas.");
   } catch (error) {
     showToast(error.message || "Não foi possível deletar as reservas.");
