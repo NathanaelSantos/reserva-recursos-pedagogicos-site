@@ -140,6 +140,8 @@ const els = {
   toast: document.querySelector("#toast")
 };
 
+let toastTimer = 0;
+
 init();
 
 async function init() {
@@ -1174,7 +1176,6 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-let toastTimer = 0;
 function showToast(message) {
   window.clearTimeout(toastTimer);
   els.toast.textContent = message;
