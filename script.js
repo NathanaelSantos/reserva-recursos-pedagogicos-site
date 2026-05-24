@@ -360,7 +360,10 @@ function renderBoard() {
     .join("");
 
   const headerShifts = days
-    .flatMap(() => SHIFTS.map((shift) => `<th class="shift-header">${shift.label}</th>`))
+    .flatMap((day) => {
+      const currentDayClass = isCurrentVisibleDay(day) ? " current-day-cell" : "";
+      return SHIFTS.map((shift) => `<th class="shift-header${currentDayClass}">${shift.label}</th>`);
+    })
     .join("");
 
   const body = groupResources(resources)
@@ -437,6 +440,11 @@ function categoryClass(group) {
 function renderSlot(resourceItem, date, shift) {
   const booking = findBooking(resourceItem.id, date, shift.id);
   const classes = ["slot-button", categoryClass(resourceItem.group)];
+  const cellClasses = ["slot"];
+  if (isCurrentVisibleDateKey(date)) {
+    classes.push("current-day-slot");
+    cellClasses.push("current-day-cell");
+  }
   let label = "";
   let course = "";
 
@@ -450,7 +458,7 @@ function renderSlot(resourceItem, date, shift) {
   }
 
   return `
-    <td class="slot">
+    <td class="${cellClasses.join(" ")}">
       <button
         class="${classes.filter(Boolean).join(" ")}"
         type="button"
@@ -1214,6 +1222,12 @@ function isToday(date) {
 function isCurrentVisibleDay(date) {
   const today = new Date();
   return date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+}
+
+function isCurrentVisibleDateKey(value) {
+  const today = new Date();
+  const [, month, day] = dateKey(value).split("-").map(Number);
+  return month === today.getMonth() + 1 && day === today.getDate();
 }
 
 function clamp(value, min, max) {
