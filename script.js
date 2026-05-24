@@ -85,8 +85,8 @@ const els = {
   mainScreen: document.querySelector("#mainScreen"),
   adminScreen: document.querySelector("#adminScreen"),
   board: document.querySelector("#board"),
-  sessionSummaryButton: document.querySelector("#sessionSummaryButton"),
   currentUserLabel: document.querySelector("#currentUserLabel"),
+  myReservationsButton: document.querySelector("#myReservationsButton"),
   loginButton: document.querySelector("#loginButton"),
   adminButton: document.querySelector("#adminButton"),
   backToSchedule: document.querySelector("#backToSchedule"),
@@ -253,7 +253,7 @@ function bindEvents() {
     state.query = els.searchInput.value.trim().toLowerCase();
     renderBoard();
   });
-  els.sessionSummaryButton.addEventListener("click", openMyReservations);
+  els.myReservationsButton.addEventListener("click", openMyReservations);
   els.loginButton.addEventListener("click", () => els.loginDialog.showModal());
   els.loginForm.addEventListener("submit", handleLogin);
   els.passwordSetupForm.addEventListener("submit", handlePasswordSetup);
