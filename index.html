@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reserva de Recursos Pedagógicos</title>
-    <link rel="stylesheet" href="styles.css?v=20260525-replicar-reservas" />
+    <link rel="stylesheet" href="styles.css?v=20260525-replicar-manual" />
   </head>
   <body>
     <header class="topbar">
@@ -106,35 +106,27 @@
             <span>Observação</span>
             <textarea id="reservationNote" name="reservationNote" rows="3" placeholder="Opcional"></textarea>
           </label>
-          <fieldset class="repeat-panel span-2" id="repeatPanel">
-            <label class="check-field">
-              <input id="repeatReservation" type="checkbox" />
-              <span>Replicar para outros dias</span>
-            </label>
-            <div class="repeat-options hidden" id="repeatOptions">
-              <label class="field">
-                <span>Até a data</span>
-                <input id="repeatEndDate" type="date" />
-              </label>
-              <div class="field">
-                <span>Turnos</span>
-                <div class="shift-checks">
-                  <label><input type="checkbox" name="repeatShift" value="manha" /> Manhã</label>
-                  <label><input type="checkbox" name="repeatShift" value="tarde" /> Tarde</label>
-                  <label><input type="checkbox" name="repeatShift" value="noite" /> Noite</label>
-                </div>
-              </div>
-            </div>
-          </fieldset>
         </div>
 
         <div class="modal-actions">
           <button class="button ghost" type="button" data-close-dialog>Fechar</button>
+          <button class="button ghost hidden" id="replicateReservation" type="button">⧉ Replicar</button>
           <button class="button danger hidden" id="cancelReservation" type="button">Cancelar reserva</button>
           <button class="button primary" id="saveReservation" type="submit">Reservar</button>
         </div>
       </form>
     </dialog>
+
+    <section id="replicationBar" class="replication-bar hidden" aria-live="polite">
+      <div>
+        <strong id="replicationTitle">Replicando reserva</strong>
+        <span id="replicationSummary">Clique nas células livres para selecionar.</span>
+      </div>
+      <div class="replication-actions">
+        <button class="button ghost" id="cancelReplicationButton" type="button">Cancelar</button>
+        <button class="button primary" id="confirmReplicationButton" type="button">Confirmar</button>
+      </div>
+    </section>
 
     <dialog id="myReservationsDialog" class="modal small">
       <div class="modal-body">
@@ -345,6 +337,6 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <section id="printArea" class="print-area" aria-hidden="true"></section>
-    <script src="script.js?v=20260525-replicar-reservas"></script>
+    <script src="script.js?v=20260525-replicar-manual"></script>
   </body>
 </html>

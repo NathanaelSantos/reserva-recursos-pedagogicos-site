@@ -75,6 +75,8 @@ const state = {
   viewYear: 2025,
   query: "",
   selectedSlot: null,
+  replicationSourceId: "",
+  replicationTargets: [],
   editingUserId: "",
   editingResourceId: "",
   selectedUserReservationsId: "",
@@ -111,11 +113,12 @@ const els = {
   teacherName: document.querySelector("#teacherName"),
   courseName: document.querySelector("#courseName"),
   reservationNote: document.querySelector("#reservationNote"),
-  repeatPanel: document.querySelector("#repeatPanel"),
-  repeatReservation: document.querySelector("#repeatReservation"),
-  repeatOptions: document.querySelector("#repeatOptions"),
-  repeatEndDate: document.querySelector("#repeatEndDate"),
-  repeatShiftInputs: document.querySelectorAll("[name='repeatShift']"),
+  replicateReservation: document.querySelector("#replicateReservation"),
+  replicationBar: document.querySelector("#replicationBar"),
+  replicationTitle: document.querySelector("#replicationTitle"),
+  replicationSummary: document.querySelector("#replicationSummary"),
+  cancelReplicationButton: document.querySelector("#cancelReplicationButton"),
+  confirmReplicationButton: document.querySelector("#confirmReplicationButton"),
   saveReservation: document.querySelector("#saveReservation"),
   cancelReservation: document.querySelector("#cancelReservation"),
   myReservationsDialog: document.querySelector("#myReservationsDialog"),
@@ -214,6 +217,8 @@ function loadSignedOutRemoteState() {
   state.resources = structuredClone(DEFAULT_RESOURCES);
   state.reservations = [];
   state.currentUser = null;
+  state.replicationSourceId = "";
+  state.replicationTargets = [];
 }
 
 function applyRemoteData(data) {
@@ -282,7 +287,9 @@ function bindEvents() {
   els.deleteAllReservationsButton.addEventListener("click", handleDeleteAllReservations);
   els.reservationForm.addEventListener("submit", handleReservationSubmit);
   els.cancelReservation.addEventListener("click", handleCancelReservation);
-  els.repeatReservation.addEventListener("change", updateRepeatOptions);
+  els.replicateReservation.addEventListener("click", startReplicationFromSelectedSlot);
+  els.cancelReplicationButton.addEventListener("click", () => cancelReplication());
+  els.confirmReplicationButton.addEventListener("click", confirmReplication);
   els.userForm.addEventListener("submit", handleUserSubmit);
   els.resourceForm.addEventListener("submit", handleResourceSubmit);
 
@@ -311,6 +318,7 @@ function render() {
   }
   renderUserReservationsPanel();
   renderMyReservationsDialog();
+  renderReplicationBar();
 }
 
 function renderSession() {
@@ -378,7 +386,10 @@ function renderAdminAccess() {
   els.adminButton.classList.toggle("hidden", !isAdmin());
 }
 
-function renderBoard() {
+function renderBoard(options = {}) {
+  const previousScroll = options.preserveScroll && els.boardWrap
+    ? { left: els.boardWrap.scrollLeft, top: els.boardWrap.scrollTop }
+    : null;
   const days = monthDays(state.viewYear, state.viewMonth);
   const resources = filteredResources();
   const totalColumns = 1 + days.length * SHIFTS.length;
@@ -421,9 +432,16 @@ function renderBoard() {
   `;
 
   els.board.querySelectorAll("[data-slot]").forEach((button) => {
-    button.addEventListener("click", () => openReservation(button.dataset));
+    button.addEventListener("click", (event) => handleSlotClick(event, button.dataset));
   });
-  scrollBoardToCurrentDay();
+  if (previousScroll) {
+    window.requestAnimationFrame(() => {
+      els.boardWrap.scrollLeft = previousScroll.left;
+      els.boardWrap.scrollTop = previousScroll.top;
+    });
+  } else {
+    scrollBoardToCurrentDay();
+  }
 }
 
 function scrollBoardToCurrentDay() {
@@ -439,6 +457,20 @@ function scrollBoardToCurrentDay() {
       behavior: "auto"
     });
   });
+}
+
+function handleSlotClick(event, dataset) {
+  if (event.target.closest("[data-replicate-icon]")) {
+    startReplicationFromSlot(dataset);
+    return;
+  }
+
+  if (isReplicationMode()) {
+    toggleReplicationTarget(dataset);
+    return;
+  }
+
+  openReservation(dataset);
 }
 
 function renderResourceRow(item, days) {
@@ -473,18 +505,41 @@ function renderSlot(resourceItem, date, shift) {
   const booking = findBooking(resourceItem.id, date, shift.id);
   const classes = ["slot-button", categoryClass(resourceItem.group)];
   const cellClasses = ["slot"];
+  const target = { resourceId: resourceItem.id, date, shift: shift.id };
+  const replicationMode = isReplicationMode();
+  const selectedForReplication = isReplicationTarget(target);
   if (isCurrentVisibleDateKey(date)) {
     classes.push("current-day-slot");
     cellClasses.push("current-day-cell");
   }
   let label = "";
+  let replicateIcon = "";
 
   if (booking) {
     const owner = userById(booking.userId);
     const mine = !isAdmin() && sameId(booking.userId, state.currentUser?.id);
     classes.push("reserved");
     classes.push(mine ? "mine" : canCancelBooking(booking) ? "" : "blocked");
+    if (replicationMode && sameId(booking.id, state.replicationSourceId)) {
+      classes.push("replication-source");
+    }
+    if (canReplicateBooking(booking, resourceItem)) {
+      replicateIcon = `<span class="replicate-icon" data-replicate-icon title="Replicar reserva" aria-hidden="true">⧉</span>`;
+    }
     label = renderSlotBookingContent(booking, owner);
+  } else if (replicationMode) {
+    if (selectedForReplication) {
+      classes.push("replication-selected");
+      label = `<span class="replication-cell-label">Copiar</span>`;
+    } else if (canBookResource(resourceItem)) {
+      classes.push("replication-selectable");
+    } else {
+      classes.push("replication-unavailable");
+    }
+  }
+
+  if (replicationMode) {
+    classes.push("replication-mode");
   }
 
   return `
@@ -498,7 +553,8 @@ function renderSlot(resourceItem, date, shift) {
         data-shift="${escapeHtml(shift.id)}"
         aria-label="${escapeHtml(resourceItem.name)} ${formatDate(date)} ${shift.label}"
       >
-        ${booking ? label : ""}
+        ${replicateIcon}
+        ${booking || selectedForReplication ? label : ""}
       </button>
     </td>
   `;
@@ -550,7 +606,6 @@ function openReservation(dataset) {
   els.teacherName.textContent = state.currentUser?.name || "";
   els.courseName.value = "";
   els.reservationNote.value = "";
-  resetRepeatFields(dataset.date, dataset.shift);
   els.courseName.placeholder = isAdmin()
     ? "Ex.: Téc. Enf. 2026.30.1 - Cíntia e Mariana"
     : "Opcional";
@@ -569,6 +624,7 @@ function openReservation(dataset) {
     els.currentBooking.classList.remove("hidden");
     els.reservationFields.classList.add("hidden");
     els.saveReservation.classList.add("hidden");
+    els.replicateReservation.classList.toggle("hidden", !canReplicateBooking(booking, resourceItem));
     els.cancelReservation.classList.toggle("hidden", !canCancelBooking(booking));
   } else {
     const canBook = canBookResource(resourceItem);
@@ -583,27 +639,12 @@ function openReservation(dataset) {
     `;
     els.currentBooking.classList.toggle("hidden", canBook);
     els.reservationFields.classList.toggle("hidden", !canBook);
-    els.repeatPanel.classList.toggle("hidden", !canBook);
     els.saveReservation.classList.toggle("hidden", !canBook);
+    els.replicateReservation.classList.add("hidden");
     els.cancelReservation.classList.add("hidden");
   }
 
   els.reservationDialog.showModal();
-}
-
-function resetRepeatFields(date, shiftId) {
-  els.repeatReservation.checked = false;
-  els.repeatOptions.classList.add("hidden");
-  els.repeatPanel.classList.remove("hidden");
-  els.repeatEndDate.min = date;
-  els.repeatEndDate.value = date;
-  els.repeatShiftInputs.forEach((input) => {
-    input.checked = input.value === shiftId;
-  });
-}
-
-function updateRepeatOptions() {
-  els.repeatOptions.classList.toggle("hidden", !els.repeatReservation.checked);
 }
 
 async function handleReservationSubmit(event) {
@@ -638,79 +679,208 @@ async function handleReservationSubmit(event) {
   }
 
   try {
-    const targets = reservationTargets(slot);
-    const conflict = targets.find((target) => findBooking(slot.resourceId, target.date, target.shift));
-    if (conflict) {
-      showToast(`Já existe reserva em ${formatDate(conflict.date)} - ${shiftLabel(conflict.shift)}.`);
-      renderBoard();
-      return;
-    }
-
-    const bookings = targets.map((target) => ({
+    const booking = {
       id: crypto.randomUUID(),
       resourceId: slot.resourceId,
-      date: target.date,
-      shift: target.shift,
+      date: slot.date,
+      shift: slot.shift,
       userId: state.currentUser.id,
       teacherName: state.currentUser.name,
       courseName,
       note,
       status: "active",
       createdAt: new Date().toISOString()
-    }));
+    };
 
     if (!usesRemoteApi() || !state.token) throw new Error("Conexão com a planilha não configurada.");
-    const data = bookings.length > 1
-      ? await api("reserveMany", { bookings })
-      : await api("reserve", { booking: bookings[0] });
+    const data = await api("reserve", { booking });
     state.reservations = data.reservations;
     els.reservationDialog.close();
     renderBoard();
     renderUserReservationsPanel();
     renderMyReservationsDialog();
-    showToast(bookings.length === 1 ? "Reserva registrada." : `${bookings.length} reservas registradas.`);
+    showToast("Reserva registrada.");
   } catch (error) {
     showToast(error.message || "Não foi possível reservar.");
   }
 }
 
-function reservationTargets(slot) {
-  if (!els.repeatReservation.checked) {
-    return [{ date: slot.date, shift: slot.shift }];
-  }
-
-  const endDate = dateKey(els.repeatEndDate.value || slot.date);
-  if (!isValidDateKey(endDate)) {
-    throw new Error("Informe a data final para replicar.");
-  }
-  if (endDate < slot.date) {
-    throw new Error("A data final precisa ser igual ou posterior ao dia escolhido.");
-  }
-
-  const shifts = [...els.repeatShiftInputs].filter((input) => input.checked).map((input) => input.value);
-  if (!shifts.length) {
-    throw new Error("Selecione pelo menos um turno para replicar.");
-  }
-
-  const targets = datesBetween(slot.date, endDate).flatMap((date) => shifts.map((shift) => ({ date, shift })));
-  if (targets.length > 120) {
-    throw new Error("Repita no máximo 120 reservas por vez.");
-  }
-
-  return targets;
+function startReplicationFromSelectedSlot() {
+  if (!state.selectedSlot?.bookingId) return;
+  startReplicationByBookingId(state.selectedSlot.bookingId);
 }
 
-function datesBetween(startDate, endDate) {
-  const dates = [];
-  const current = parseDateKey(startDate);
-  const end = parseDateKey(endDate);
+function startReplicationFromSlot(dataset) {
+  const booking = findBooking(dataset.resourceId, dataset.date, dataset.shift);
+  if (!booking) return;
+  startReplicationByBookingId(booking.id);
+}
 
-  while (current <= end) {
-    dates.push(toDateKey(current));
-    current.setDate(current.getDate() + 1);
+function startReplicationByBookingId(bookingId) {
+  const booking = state.reservations.find((item) => sameId(item.id, bookingId));
+  const resourceItem = state.resources.find((item) => item.id === booking?.resourceId);
+  if (!canReplicateBooking(booking, resourceItem)) {
+    showToast("Você não tem permissão para replicar esta reserva.");
+    return;
+  }
+  if (isAdmin() && !String(booking.courseName || "").trim() && !String(booking.note || "").trim()) {
+    showToast("Esta reserva não tem curso/turma ou observação para replicar.");
+    return;
   }
 
-  return dates;
+  state.replicationSourceId = booking.id;
+  state.replicationTargets = [];
+  if (els.reservationDialog.open) {
+    els.reservationDialog.close();
+  }
+  renderBoard({ preserveScroll: true });
+  renderReplicationBar();
+  showToast("Modo replicar ativado. Clique nas células livres e confirme.");
+}
+
+function toggleReplicationTarget(dataset) {
+  const source = replicationSourceBooking();
+  if (!source) {
+    cancelReplication({ silent: true });
+    return;
+  }
+
+  const target = {
+    resourceId: dataset.resourceId,
+    date: dataset.date,
+    shift: dataset.shift
+  };
+  const targetKey = replicationTargetKey(target);
+  const sourceKey = replicationTargetKey(source);
+  if (targetKey === sourceKey) {
+    showToast("Esta é a reserva original.");
+    return;
+  }
+
+  const existingIndex = state.replicationTargets.findIndex((item) => replicationTargetKey(item) === targetKey);
+  if (existingIndex >= 0) {
+    state.replicationTargets.splice(existingIndex, 1);
+    renderBoard({ preserveScroll: true });
+    renderReplicationBar();
+    return;
+  }
+
+  const resourceItem = state.resources.find((item) => item.id === target.resourceId);
+  if (!canBookResource(resourceItem)) {
+    showToast("Você não tem permissão para reservar este recurso.");
+    return;
+  }
+  if (findBooking(target.resourceId, target.date, target.shift)) {
+    showToast("Essa célula já está reservada.");
+    return;
+  }
+  if (state.replicationTargets.length >= 120) {
+    showToast("Selecione no máximo 120 células por vez.");
+    return;
+  }
+
+  state.replicationTargets.push(target);
+  renderBoard({ preserveScroll: true });
+  renderReplicationBar();
+}
+
+async function confirmReplication() {
+  const source = replicationSourceBooking();
+  if (!source) {
+    cancelReplication({ silent: true });
+    return;
+  }
+  if (!state.replicationTargets.length) {
+    showToast("Selecione pelo menos uma célula para replicar.");
+    return;
+  }
+
+  const conflict = state.replicationTargets.find((target) => findBooking(target.resourceId, target.date, target.shift));
+  if (conflict) {
+    showToast(`Já existe reserva em ${formatDate(conflict.date)} - ${shiftLabel(conflict.shift)}.`);
+    renderBoard({ preserveScroll: true });
+    return;
+  }
+
+  const bookings = state.replicationTargets.map((target) => ({
+    id: crypto.randomUUID(),
+    resourceId: target.resourceId,
+    date: target.date,
+    shift: target.shift,
+    userId: state.currentUser.id,
+    teacherName: state.currentUser.name,
+    courseName: source.courseName || "",
+    note: source.note || "",
+    status: "active",
+    createdAt: new Date().toISOString()
+  }));
+
+  try {
+    if (!usesRemoteApi() || !state.token) throw new Error("Conexão com a planilha não configurada.");
+    const data = bookings.length > 1
+      ? await api("reserveMany", { bookings })
+      : await api("reserve", { booking: bookings[0] });
+    state.reservations = data.reservations;
+    const count = bookings.length;
+    cancelReplication({ silent: true, skipRender: true });
+    renderBoard();
+    renderUserReservationsPanel();
+    renderMyReservationsDialog();
+    renderReplicationBar();
+    showToast(count === 1 ? "Reserva replicada." : `${count} reservas replicadas.`);
+  } catch (error) {
+    showToast(error.message || "Não foi possível replicar.");
+  }
+}
+
+function cancelReplication(options = {}) {
+  state.replicationSourceId = "";
+  state.replicationTargets = [];
+  if (!options.skipRender) {
+    renderBoard({ preserveScroll: true });
+  }
+  renderReplicationBar();
+  if (!options.silent) {
+    showToast("Replicação cancelada.");
+  }
+}
+
+function renderReplicationBar() {
+  if (!els.replicationBar) return;
+  const source = replicationSourceBooking();
+  const active = Boolean(source);
+  els.replicationBar.classList.toggle("hidden", !active);
+  document.body.classList.toggle("replication-active", active);
+  if (!active) return;
+
+  const sourceResource = state.resources.find((item) => item.id === source.resourceId);
+  const selectedCount = state.replicationTargets.length;
+  els.replicationTitle.textContent = `Replicando: ${sourceResource?.name || "Reserva"}`;
+  els.replicationSummary.textContent =
+    selectedCount === 1
+      ? "1 célula selecionada"
+      : `${selectedCount} células selecionadas`;
+  els.confirmReplicationButton.textContent = selectedCount
+    ? `Confirmar (${selectedCount})`
+    : "Confirmar";
+}
+
+function replicationSourceBooking() {
+  if (!state.replicationSourceId) return null;
+  return state.reservations.find((item) => sameId(item.id, state.replicationSourceId)) || null;
+}
+
+function isReplicationMode() {
+  return Boolean(replicationSourceBooking());
+}
+
+function isReplicationTarget(target) {
+  const key = replicationTargetKey(target);
+  return state.replicationTargets.some((item) => replicationTargetKey(item) === key);
+}
+
+function replicationTargetKey(target) {
+  return `${target.resourceId}|${target.date}|${target.shift}`;
 }
 
 async function handleCancelReservation() {
@@ -1303,6 +1473,12 @@ function canCancelBooking(booking) {
   return sameId(booking.userId, state.currentUser?.id) && canBookResource(resourceItem);
 }
 
+function canReplicateBooking(booking, resourceItem) {
+  if (!booking || requiresPasswordSetup()) return false;
+  if (!isAdmin() && !sameId(booking.userId, state.currentUser?.id)) return false;
+  return canBookResource(resourceItem);
+}
+
 function requiresPasswordSetup(user = state.currentUser) {
   return Boolean(user?.mustChangePin);
 }
@@ -1373,16 +1549,6 @@ function formatDate(dateKey) {
 
 function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function parseDateKey(value) {
-  const [year, month, day] = dateKey(value).split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function isValidDateKey(value) {
-  const parsed = parseDateKey(value);
-  return !Number.isNaN(parsed.getTime()) && toDateKey(parsed) === value;
 }
 
 function dateKey(value) {

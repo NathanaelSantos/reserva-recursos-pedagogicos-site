@@ -708,6 +708,7 @@ button {
   line-height: 1.15;
   overflow: hidden;
   padding: 4px 5px;
+  position: relative;
   text-align: center;
   width: 100%;
   word-break: break-word;
@@ -751,6 +752,52 @@ button {
   font-size: 0.66rem;
   font-weight: 400;
   margin-top: 2px;
+}
+
+.replicate-icon {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.22);
+  color: #075985;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  height: 18px;
+  justify-content: center;
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 18px;
+}
+
+.slot-button.replication-mode {
+  cursor: copy;
+}
+
+.slot-button.replication-selectable:hover,
+.slot-button.replication-selectable:focus-visible {
+  outline: 3px solid #0ea5e9;
+  outline-offset: -3px;
+}
+
+.slot-button.replication-selected {
+  background: #bbf7d0 !important;
+  box-shadow: inset 0 0 0 3px #16a34a;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.slot-button.replication-source {
+  box-shadow: inset 0 0 0 3px #f59e0b;
+}
+
+.slot-button.replication-unavailable {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.replication-cell-label {
+  color: #14532d;
 }
 
 .modal {
@@ -815,52 +862,6 @@ button {
 
 .span-2 {
   grid-column: span 2;
-}
-
-.repeat-panel {
-  background: #f8fafc;
-  border: 1px solid var(--line-soft);
-  display: grid;
-  gap: 12px;
-  margin: 0;
-  padding: 12px;
-}
-
-.check-field {
-  align-items: center;
-  color: var(--ink);
-  display: flex;
-  gap: 9px;
-  font-weight: 800;
-}
-
-.check-field input,
-.shift-checks input {
-  accent-color: var(--accent);
-}
-
-.repeat-options {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-}
-
-.shift-checks {
-  align-items: center;
-  background: white;
-  border: 1px solid var(--line-soft);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  min-height: 40px;
-  padding: 8px 10px;
-}
-
-.shift-checks label {
-  align-items: center;
-  display: inline-flex;
-  gap: 5px;
-  font-weight: 700;
 }
 
 .admin-form {
@@ -989,6 +990,49 @@ button {
 .booking-card p {
   color: var(--muted);
   margin: 4px 0 0;
+}
+
+.replication-bar {
+  align-items: center;
+  background: #111827;
+  box-shadow: var(--shadow);
+  color: white;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  left: 18px;
+  padding: 12px 14px;
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 45;
+}
+
+.replication-bar strong,
+.replication-bar span {
+  display: block;
+}
+
+.replication-bar span {
+  color: #cbd5e1;
+  font-size: 0.86rem;
+  margin-top: 2px;
+}
+
+.replication-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.replication-bar .button.ghost {
+  border-color: rgba(255, 255, 255, 0.75);
+  color: white;
+}
+
+.replication-active .toast {
+  bottom: 88px;
 }
 
 .compact-table {
@@ -1155,8 +1199,17 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .repeat-options {
-    grid-template-columns: 1fr;
+  .replication-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .replication-actions {
+    justify-content: stretch;
+  }
+
+  .replication-actions .button {
+    flex: 1;
   }
 
   .span-2 {
