@@ -472,15 +472,13 @@ function renderSlot(resourceItem, date, shift) {
     cellClasses.push("current-day-cell");
   }
   let label = "";
-  let course = "";
 
   if (booking) {
     const owner = userById(booking.userId);
-    const mine = sameId(booking.userId, state.currentUser?.id);
+    const mine = !isAdmin() && sameId(booking.userId, state.currentUser?.id);
     classes.push("reserved");
     classes.push(mine ? "mine" : canCancelBooking(booking) ? "" : "blocked");
-    label = booking.teacherName || owner?.name || "Reservado";
-    course = booking.courseName || "";
+    label = renderSlotBookingContent(booking, owner);
   }
 
   return `
@@ -494,10 +492,23 @@ function renderSlot(resourceItem, date, shift) {
         data-shift="${escapeHtml(shift.id)}"
         aria-label="${escapeHtml(resourceItem.name)} ${formatDate(date)} ${shift.label}"
       >
-        ${booking ? `<span>${escapeHtml(label)}</span>${course ? `<span class="course">${escapeHtml(course)}</span>` : ""}` : ""}
+        ${booking ? label : ""}
       </button>
     </td>
   `;
+}
+
+function renderSlotBookingContent(booking, owner) {
+  return bookingDisplayLines(booking, owner)
+    .map((line, index) => `<span${index ? ` class="course"` : ""}>${escapeHtml(line)}</span>`)
+    .join("");
+}
+
+function bookingDisplayLines(booking, owner) {
+  const publicLines = [booking.courseName, booking.note].map((line) => String(line || "").trim()).filter(Boolean);
+  if (publicLines.length) return publicLines;
+
+  return [booking.teacherName || owner?.name || "Reservado"];
 }
 
 function emptyRow(totalColumns) {
@@ -533,14 +544,20 @@ function openReservation(dataset) {
   els.teacherName.textContent = state.currentUser?.name || "";
   els.courseName.value = "";
   els.reservationNote.value = "";
+  els.courseName.placeholder = isAdmin()
+    ? "Ex.: Téc. Enf. 2026.30.1 - Cíntia e Mariana"
+    : "Opcional";
+  els.reservationNote.placeholder = isAdmin()
+    ? "Complemento que também aparece na grade"
+    : "Opcional";
 
   if (booking) {
     const owner = userById(booking.userId);
+    const displayLines = bookingDisplayLines(booking, owner);
     els.currentBooking.innerHTML = `
-      <strong>${escapeHtml(booking.teacherName || owner?.name || "Reservado")}</strong>
-      ${booking.courseName ? `<p>${escapeHtml(booking.courseName)}</p>` : ""}
-      ${booking.note ? `<p>${escapeHtml(booking.note)}</p>` : ""}
-      <p>Solicitante: ${escapeHtml(owner?.name || "Não identificado")}</p>
+      <strong>${escapeHtml(displayLines[0] || "Reservado")}</strong>
+      ${displayLines.slice(1).map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+      <p>Solicitante: ${escapeHtml(owner?.name || booking.teacherName || "Não identificado")}</p>
     `;
     els.currentBooking.classList.remove("hidden");
     els.reservationFields.classList.add("hidden");
@@ -590,6 +607,13 @@ async function handleReservationSubmit(event) {
     return;
   }
 
+  const courseName = els.courseName.value.trim();
+  const note = els.reservationNote.value.trim();
+  if (isAdmin() && !courseName && !note) {
+    showToast("Informe o curso/turma ou uma observação para aparecer na grade.");
+    return;
+  }
+
   const booking = {
     id: crypto.randomUUID(),
     resourceId: slot.resourceId,
@@ -597,8 +621,8 @@ async function handleReservationSubmit(event) {
     shift: slot.shift,
     userId: state.currentUser.id,
     teacherName: state.currentUser.name,
-    courseName: els.courseName.value.trim(),
-    note: els.reservationNote.value.trim(),
+    courseName,
+    note,
     status: "active",
     createdAt: new Date().toISOString()
   };
