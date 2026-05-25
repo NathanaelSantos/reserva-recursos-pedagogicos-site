@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reserva de Recursos Pedagógicos</title>
-    <link rel="stylesheet" href="styles.css?v=20260525-replicar-manual" />
+    <link rel="stylesheet" href="styles.css?v=20260525-toolbar-compacta" />
   </head>
   <body>
     <header class="topbar">
@@ -62,17 +62,17 @@
           <button class="button" id="todayButton" type="button">Hoje</button>
         </div>
 
+        <div class="status-row" aria-label="Legenda">
+          <span><i class="swatch available"></i>Disponível</span>
+          <span><i class="swatch reserved"></i>Reservado</span>
+          <span><i class="swatch mine"></i>Minha reserva</span>
+          <span><i class="swatch blocked"></i>Sem permissão para cancelar</span>
+        </div>
+
         <label class="field search-field">
           <span>Buscar recurso</span>
           <input id="searchInput" type="search" placeholder="Ex.: datashow, 102, informática" />
         </label>
-      </section>
-
-      <section class="status-row" aria-label="Legenda">
-        <span><i class="swatch available"></i>Disponível</span>
-        <span><i class="swatch reserved"></i>Reservado</span>
-        <span><i class="swatch mine"></i>Minha reserva</span>
-        <span><i class="swatch blocked"></i>Sem permissão para cancelar</span>
       </section>
 
       <section class="board-wrap" aria-live="polite">

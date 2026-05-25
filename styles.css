@@ -157,7 +157,7 @@ button {
 }
 
 .layout {
-  padding: 18px 22px 30px;
+  padding: 8px 16px 18px;
 }
 
 .login-screen {
@@ -252,20 +252,43 @@ button {
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 10px 18px;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .month-controls {
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .month-controls .field {
   flex: 0 0 auto;
+}
+
+.toolbar .field {
+  gap: 3px;
+}
+
+.toolbar .field span {
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.toolbar .field input,
+.toolbar .field select {
+  height: 32px;
+  min-height: 32px;
+  padding: 5px 9px;
+}
+
+.toolbar .button,
+.toolbar .icon-button {
+  height: 32px;
+  min-height: 32px;
+  padding: 5px 11px;
 }
 
 .field {
@@ -322,7 +345,7 @@ button {
 }
 
 #todayButton {
-  min-width: 66px;
+  min-width: 58px;
 }
 
 .year-field input {
@@ -396,10 +419,13 @@ button {
 }
 
 .status-row {
+  align-self: end;
   color: #0f4a6b;
+  flex: 1 1 360px;
   flex-wrap: wrap;
-  font-size: 0.86rem;
-  margin: 0 0 12px;
+  font-size: 0.76rem;
+  gap: 7px 10px;
+  margin: 0 0 6px;
 }
 
 .status-row span {
@@ -411,8 +437,8 @@ button {
 .swatch {
   border: 1px solid var(--line);
   display: inline-block;
-  height: 14px;
-  width: 18px;
+  height: 11px;
+  width: 15px;
 }
 
 .swatch.available {
@@ -442,7 +468,7 @@ button {
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  height: calc(100vh - 215px);
+  height: calc(100vh - 155px);
   min-height: 360px;
   overflow: auto;
   overscroll-behavior: contain;
