@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reserva de Recursos Pedagógicos</title>
-    <link rel="stylesheet" href="styles.css?v=20260524-canto-recursos" />
+    <link rel="stylesheet" href="styles.css?v=20260525-login-screen" />
   </head>
   <body>
     <header class="topbar">
@@ -19,13 +19,33 @@
           <span>Sessão</span>
           <strong id="currentUserLabel">Aguardando acesso</strong>
         </div>
-        <button class="button" id="myReservationsButton" type="button">Minhas reservas</button>
-        <button class="button ghost" id="loginButton" type="button">Entrar</button>
+        <button class="button hidden" id="myReservationsButton" type="button">Minhas reservas</button>
+        <button class="button ghost hidden" id="loginButton" type="button">Entrar</button>
         <button class="button primary hidden" id="adminButton" type="button">Área da coordenação</button>
       </div>
     </header>
 
-    <main id="mainScreen" class="layout">
+    <main id="loginScreen" class="login-screen">
+      <section class="login-card" aria-labelledby="loginScreenTitle">
+        <div>
+          <p class="eyebrow">Acesso restrito</p>
+          <h2 id="loginScreenTitle">Entre para acessar a agenda</h2>
+        </div>
+        <form id="landingLoginForm" class="login-page-form">
+          <label class="field">
+            <span>E-mail</span>
+            <input id="landingLoginEmail" type="email" autocomplete="email" placeholder="seu.email@escola.com" required />
+          </label>
+          <label class="field">
+            <span>PIN ou senha numérica</span>
+            <input id="landingLoginPin" type="password" inputmode="numeric" autocomplete="current-password" required />
+          </label>
+          <button class="button primary" type="submit">Entrar</button>
+        </form>
+      </section>
+    </main>
+
+    <main id="mainScreen" class="layout hidden">
       <section class="toolbar" aria-label="Controles da agenda">
         <div class="month-controls">
           <button class="icon-button" id="prevMonth" type="button" aria-label="Mês anterior">&lt;</button>
@@ -304,6 +324,6 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <section id="printArea" class="print-area" aria-hidden="true"></section>
-    <script src="script.js?v=20260524-cor-dia-atual"></script>
+    <script src="script.js?v=20260525-login-screen"></script>
   </body>
 </html>

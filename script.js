@@ -82,6 +82,7 @@ const state = {
 };
 
 const els = {
+  loginScreen: document.querySelector("#loginScreen"),
   mainScreen: document.querySelector("#mainScreen"),
   adminScreen: document.querySelector("#adminScreen"),
   boardWrap: document.querySelector(".board-wrap"),
@@ -90,6 +91,9 @@ const els = {
   myReservationsButton: document.querySelector("#myReservationsButton"),
   loginButton: document.querySelector("#loginButton"),
   adminButton: document.querySelector("#adminButton"),
+  landingLoginForm: document.querySelector("#landingLoginForm"),
+  landingLoginEmail: document.querySelector("#landingLoginEmail"),
+  landingLoginPin: document.querySelector("#landingLoginPin"),
   backToSchedule: document.querySelector("#backToSchedule"),
   prevMonth: document.querySelector("#prevMonth"),
   nextMonth: document.querySelector("#nextMonth"),
@@ -161,7 +165,6 @@ async function init() {
       await loadRemoteData();
     } else {
       loadSignedOutRemoteState();
-      showToast("Entre para salvar na planilha.");
     }
   } else {
     loadSignedOutRemoteState();
@@ -256,6 +259,7 @@ function bindEvents() {
   });
   els.myReservationsButton.addEventListener("click", openMyReservations);
   els.loginButton.addEventListener("click", () => els.loginDialog.showModal());
+  els.landingLoginForm.addEventListener("submit", handleLogin);
   els.loginForm.addEventListener("submit", handleLogin);
   els.passwordSetupForm.addEventListener("submit", handlePasswordSetup);
   els.passwordSetupDialog.addEventListener("close", () => {
@@ -290,8 +294,13 @@ function render() {
   els.monthSelect.value = String(state.viewMonth);
   els.yearInput.value = String(state.viewYear);
   renderSession();
+  renderAuthGate();
   renderAdminAccess();
-  renderBoard();
+  if (state.currentUser) {
+    renderBoard();
+  } else {
+    els.board.innerHTML = "";
+  }
   renderUserReservationsPanel();
   renderMyReservationsDialog();
 }
@@ -306,6 +315,20 @@ function renderSession() {
   const pending = state.currentUser.mustChangePin ? " - definir senha" : "";
   els.currentUserLabel.textContent = `${state.currentUser.name} - ${roleLabel(state.currentUser.role)}${pending}`;
   els.loginButton.textContent = usesRemoteApi() ? "Trocar acesso" : "Trocar acesso";
+}
+
+function renderAuthGate() {
+  const signedIn = Boolean(state.currentUser);
+  const adminOpen = !els.adminScreen.classList.contains("hidden");
+
+  els.loginScreen.classList.toggle("hidden", signedIn);
+  els.mainScreen.classList.toggle("hidden", !signedIn || adminOpen);
+  els.myReservationsButton.classList.toggle("hidden", !signedIn);
+  els.loginButton.classList.toggle("hidden", !signedIn);
+
+  if (!signedIn) {
+    els.adminScreen.classList.add("hidden");
+  }
 }
 
 function openMyReservations() {
@@ -650,6 +673,8 @@ async function handleDeleteAllReservations() {
 
 async function handleLogin(event) {
   event.preventDefault();
+  const credentials = loginCredentialsFromForm(event.currentTarget);
+
   try {
     if (!usesRemoteApi()) {
       showToast("Conexão com a planilha não configurada.");
@@ -657,8 +682,8 @@ async function handleLogin(event) {
     }
 
     const data = await api("login", {
-      email: els.loginEmail.value.trim(),
-      pin: els.loginPin.value
+      email: credentials.email,
+      pin: credentials.pin
     });
     state.token = data.token;
     localStorage.setItem(TOKEN_KEY, data.token);
@@ -667,8 +692,10 @@ async function handleLogin(event) {
     } else {
       await loadRemoteData();
     }
-    els.loginDialog.close();
-    els.loginForm.reset();
+    if (els.loginDialog.open) {
+      els.loginDialog.close();
+    }
+    resetLoginForms();
     closeAdminScreen();
     render();
     if (requiresPasswordSetup()) {
@@ -679,6 +706,25 @@ async function handleLogin(event) {
   } catch (error) {
     showToast(error.message || "Login inválido.");
   }
+}
+
+function loginCredentialsFromForm(form) {
+  if (form === els.landingLoginForm) {
+    return {
+      email: els.landingLoginEmail.value.trim(),
+      pin: els.landingLoginPin.value
+    };
+  }
+
+  return {
+    email: els.loginEmail.value.trim(),
+    pin: els.loginPin.value
+  };
+}
+
+function resetLoginForms() {
+  els.landingLoginForm.reset();
+  els.loginForm.reset();
 }
 
 function hasRemoteData(data) {
@@ -801,7 +847,7 @@ function openAdminScreen() {
 
 function closeAdminScreen() {
   els.adminScreen.classList.add("hidden");
-  els.mainScreen.classList.remove("hidden");
+  renderAuthGate();
 }
 
 function renderUsersTable() {

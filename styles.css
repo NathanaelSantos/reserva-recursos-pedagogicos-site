@@ -142,6 +142,39 @@ button {
   padding: 18px 22px 30px;
 }
 
+.login-screen {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: calc(100vh - 85px);
+  padding: 28px 18px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 18px;
+  max-width: 430px;
+  padding: 24px;
+  width: min(430px, 100%);
+}
+
+.login-card h2 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.login-page-form {
+  display: grid;
+  gap: 14px;
+}
+
+.login-page-form .button {
+  width: 100%;
+}
+
 .admin-screen {
   padding: 18px 22px 30px;
 }
