@@ -89,10 +89,28 @@ button {
 }
 
 .brand h1 {
+  align-items: center;
   color: white;
+  display: flex;
+  flex-wrap: wrap;
   font-size: clamp(1.05rem, 2vw, 1.35rem);
+  gap: 8px;
   line-height: 1.15;
   margin: 0;
+}
+
+.beta-badge {
+  background: #facc15;
+  color: #17202a;
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .brand p,
