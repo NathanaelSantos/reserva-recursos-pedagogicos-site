@@ -111,6 +111,11 @@ const els = {
   teacherName: document.querySelector("#teacherName"),
   courseName: document.querySelector("#courseName"),
   reservationNote: document.querySelector("#reservationNote"),
+  repeatPanel: document.querySelector("#repeatPanel"),
+  repeatReservation: document.querySelector("#repeatReservation"),
+  repeatOptions: document.querySelector("#repeatOptions"),
+  repeatEndDate: document.querySelector("#repeatEndDate"),
+  repeatShiftInputs: document.querySelectorAll("[name='repeatShift']"),
   saveReservation: document.querySelector("#saveReservation"),
   cancelReservation: document.querySelector("#cancelReservation"),
   myReservationsDialog: document.querySelector("#myReservationsDialog"),
@@ -277,6 +282,7 @@ function bindEvents() {
   els.deleteAllReservationsButton.addEventListener("click", handleDeleteAllReservations);
   els.reservationForm.addEventListener("submit", handleReservationSubmit);
   els.cancelReservation.addEventListener("click", handleCancelReservation);
+  els.repeatReservation.addEventListener("change", updateRepeatOptions);
   els.userForm.addEventListener("submit", handleUserSubmit);
   els.resourceForm.addEventListener("submit", handleResourceSubmit);
 
@@ -544,6 +550,7 @@ function openReservation(dataset) {
   els.teacherName.textContent = state.currentUser?.name || "";
   els.courseName.value = "";
   els.reservationNote.value = "";
+  resetRepeatFields(dataset.date, dataset.shift);
   els.courseName.placeholder = isAdmin()
     ? "Ex.: Téc. Enf. 2026.30.1 - Cíntia e Mariana"
     : "Opcional";
@@ -576,11 +583,27 @@ function openReservation(dataset) {
     `;
     els.currentBooking.classList.toggle("hidden", canBook);
     els.reservationFields.classList.toggle("hidden", !canBook);
+    els.repeatPanel.classList.toggle("hidden", !canBook);
     els.saveReservation.classList.toggle("hidden", !canBook);
     els.cancelReservation.classList.add("hidden");
   }
 
   els.reservationDialog.showModal();
+}
+
+function resetRepeatFields(date, shiftId) {
+  els.repeatReservation.checked = false;
+  els.repeatOptions.classList.add("hidden");
+  els.repeatPanel.classList.remove("hidden");
+  els.repeatEndDate.min = date;
+  els.repeatEndDate.value = date;
+  els.repeatShiftInputs.forEach((input) => {
+    input.checked = input.value === shiftId;
+  });
+}
+
+function updateRepeatOptions() {
+  els.repeatOptions.classList.toggle("hidden", !els.repeatReservation.checked);
 }
 
 async function handleReservationSubmit(event) {
@@ -614,31 +637,80 @@ async function handleReservationSubmit(event) {
     return;
   }
 
-  const booking = {
-    id: crypto.randomUUID(),
-    resourceId: slot.resourceId,
-    date: slot.date,
-    shift: slot.shift,
-    userId: state.currentUser.id,
-    teacherName: state.currentUser.name,
-    courseName,
-    note,
-    status: "active",
-    createdAt: new Date().toISOString()
-  };
-
   try {
+    const targets = reservationTargets(slot);
+    const conflict = targets.find((target) => findBooking(slot.resourceId, target.date, target.shift));
+    if (conflict) {
+      showToast(`Já existe reserva em ${formatDate(conflict.date)} - ${shiftLabel(conflict.shift)}.`);
+      renderBoard();
+      return;
+    }
+
+    const bookings = targets.map((target) => ({
+      id: crypto.randomUUID(),
+      resourceId: slot.resourceId,
+      date: target.date,
+      shift: target.shift,
+      userId: state.currentUser.id,
+      teacherName: state.currentUser.name,
+      courseName,
+      note,
+      status: "active",
+      createdAt: new Date().toISOString()
+    }));
+
     if (!usesRemoteApi() || !state.token) throw new Error("Conexão com a planilha não configurada.");
-    const data = await api("reserve", { booking });
+    const data = bookings.length > 1
+      ? await api("reserveMany", { bookings })
+      : await api("reserve", { booking: bookings[0] });
     state.reservations = data.reservations;
     els.reservationDialog.close();
     renderBoard();
     renderUserReservationsPanel();
     renderMyReservationsDialog();
-    showToast("Reserva registrada.");
+    showToast(bookings.length === 1 ? "Reserva registrada." : `${bookings.length} reservas registradas.`);
   } catch (error) {
     showToast(error.message || "Não foi possível reservar.");
   }
+}
+
+function reservationTargets(slot) {
+  if (!els.repeatReservation.checked) {
+    return [{ date: slot.date, shift: slot.shift }];
+  }
+
+  const endDate = dateKey(els.repeatEndDate.value || slot.date);
+  if (!isValidDateKey(endDate)) {
+    throw new Error("Informe a data final para replicar.");
+  }
+  if (endDate < slot.date) {
+    throw new Error("A data final precisa ser igual ou posterior ao dia escolhido.");
+  }
+
+  const shifts = [...els.repeatShiftInputs].filter((input) => input.checked).map((input) => input.value);
+  if (!shifts.length) {
+    throw new Error("Selecione pelo menos um turno para replicar.");
+  }
+
+  const targets = datesBetween(slot.date, endDate).flatMap((date) => shifts.map((shift) => ({ date, shift })));
+  if (targets.length > 120) {
+    throw new Error("Repita no máximo 120 reservas por vez.");
+  }
+
+  return targets;
+}
+
+function datesBetween(startDate, endDate) {
+  const dates = [];
+  const current = parseDateKey(startDate);
+  const end = parseDateKey(endDate);
+
+  while (current <= end) {
+    dates.push(toDateKey(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
 }
 
 async function handleCancelReservation() {
@@ -1301,6 +1373,16 @@ function formatDate(dateKey) {
 
 function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function parseDateKey(value) {
+  const [year, month, day] = dateKey(value).split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function isValidDateKey(value) {
+  const parsed = parseDateKey(value);
+  return !Number.isNaN(parsed.getTime()) && toDateKey(parsed) === value;
 }
 
 function dateKey(value) {

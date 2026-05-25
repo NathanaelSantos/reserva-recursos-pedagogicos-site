@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reserva de Recursos Pedagógicos</title>
-    <link rel="stylesheet" href="styles.css?v=20260525-coord-reservas" />
+    <link rel="stylesheet" href="styles.css?v=20260525-replicar-reservas" />
   </head>
   <body>
     <header class="topbar">
@@ -106,6 +106,26 @@
             <span>Observação</span>
             <textarea id="reservationNote" name="reservationNote" rows="3" placeholder="Opcional"></textarea>
           </label>
+          <fieldset class="repeat-panel span-2" id="repeatPanel">
+            <label class="check-field">
+              <input id="repeatReservation" type="checkbox" />
+              <span>Replicar para outros dias</span>
+            </label>
+            <div class="repeat-options hidden" id="repeatOptions">
+              <label class="field">
+                <span>Até a data</span>
+                <input id="repeatEndDate" type="date" />
+              </label>
+              <div class="field">
+                <span>Turnos</span>
+                <div class="shift-checks">
+                  <label><input type="checkbox" name="repeatShift" value="manha" /> Manhã</label>
+                  <label><input type="checkbox" name="repeatShift" value="tarde" /> Tarde</label>
+                  <label><input type="checkbox" name="repeatShift" value="noite" /> Noite</label>
+                </div>
+              </div>
+            </div>
+          </fieldset>
         </div>
 
         <div class="modal-actions">
@@ -325,6 +345,6 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <section id="printArea" class="print-area" aria-hidden="true"></section>
-    <script src="script.js?v=20260525-coord-reservas"></script>
+    <script src="script.js?v=20260525-replicar-reservas"></script>
   </body>
 </html>
