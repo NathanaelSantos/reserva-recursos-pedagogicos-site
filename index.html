@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reserva de Recursos Pedagógicos</title>
-    <link rel="stylesheet" href="styles.css?v=20260525-login-screen" />
+    <link rel="stylesheet" href="styles.css?v=20260525-auditoria-sair" />
   </head>
   <body>
     <header class="topbar">
@@ -21,6 +21,7 @@
         </div>
         <button class="button hidden" id="myReservationsButton" type="button">Minhas reservas</button>
         <button class="button ghost hidden" id="loginButton" type="button">Entrar</button>
+        <button class="button ghost hidden" id="logoutButton" type="button">Sair</button>
         <button class="button primary hidden" id="adminButton" type="button">Área da coordenação</button>
       </div>
     </header>
@@ -170,13 +171,13 @@
         </div>
         <label class="field">
           <span>Nova senha</span>
-          <input id="newPassword" type="password" inputmode="numeric" pattern="[0-9]{4,8}" autocomplete="new-password" required />
+          <input id="newPassword" type="password" inputmode="numeric" pattern="[0-9]{6,8}" autocomplete="new-password" required />
         </label>
         <label class="field">
           <span>Confirmar senha</span>
-          <input id="confirmPassword" type="password" inputmode="numeric" pattern="[0-9]{4,8}" autocomplete="new-password" required />
+          <input id="confirmPassword" type="password" inputmode="numeric" pattern="[0-9]{6,8}" autocomplete="new-password" required />
         </label>
-        <p class="form-help">Use apenas números, com 4 a 8 dígitos.</p>
+        <p class="form-help">Use apenas números, com 6 a 8 dígitos.</p>
         <div class="modal-actions">
           <button class="button primary" type="submit">Salvar senha</button>
         </div>
@@ -219,7 +220,7 @@
               </label>
               <label class="field">
                 <span>PIN inicial</span>
-                <input id="newUserPin" inputmode="numeric" placeholder="Temporário para primeiro acesso" />
+                <input id="newUserPin" inputmode="numeric" pattern="[0-9]{6,8}" placeholder="6 a 8 dígitos temporários" />
               </label>
               <div class="resource-form-actions">
                 <button class="button primary" id="userSubmitButton" type="submit">Adicionar usuário</button>
@@ -324,6 +325,6 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <section id="printArea" class="print-area" aria-hidden="true"></section>
-    <script src="script.js?v=20260525-login-screen"></script>
+    <script src="script.js?v=20260525-auditoria-sair"></script>
   </body>
 </html>

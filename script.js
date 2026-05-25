@@ -90,6 +90,7 @@ const els = {
   currentUserLabel: document.querySelector("#currentUserLabel"),
   myReservationsButton: document.querySelector("#myReservationsButton"),
   loginButton: document.querySelector("#loginButton"),
+  logoutButton: document.querySelector("#logoutButton"),
   adminButton: document.querySelector("#adminButton"),
   landingLoginForm: document.querySelector("#landingLoginForm"),
   landingLoginEmail: document.querySelector("#landingLoginEmail"),
@@ -259,6 +260,7 @@ function bindEvents() {
   });
   els.myReservationsButton.addEventListener("click", openMyReservations);
   els.loginButton.addEventListener("click", () => els.loginDialog.showModal());
+  els.logoutButton.addEventListener("click", handleLogout);
   els.landingLoginForm.addEventListener("submit", handleLogin);
   els.loginForm.addEventListener("submit", handleLogin);
   els.passwordSetupForm.addEventListener("submit", handlePasswordSetup);
@@ -325,6 +327,7 @@ function renderAuthGate() {
   els.mainScreen.classList.toggle("hidden", !signedIn || adminOpen);
   els.myReservationsButton.classList.toggle("hidden", !signedIn);
   els.loginButton.classList.toggle("hidden", !signedIn);
+  els.logoutButton.classList.toggle("hidden", !signedIn);
 
   if (!signedIn) {
     els.adminScreen.classList.add("hidden");
@@ -708,6 +711,33 @@ async function handleLogin(event) {
   }
 }
 
+async function handleLogout() {
+  const hadToken = Boolean(state.token);
+
+  try {
+    if (usesRemoteApi() && hadToken) {
+      await api("logout", {});
+    }
+  } catch (error) {
+    // Mesmo se o backend ainda não tiver logout publicado, encerra a sessão local.
+  }
+
+  state.token = "";
+  localStorage.removeItem(TOKEN_KEY);
+  loadSignedOutRemoteState();
+  state.selectedSlot = null;
+  state.selectedUserReservationsId = "";
+  resetLoginForms();
+
+  [els.reservationDialog, els.myReservationsDialog, els.passwordSetupDialog, els.loginDialog].forEach((dialog) => {
+    if (dialog?.open) dialog.close();
+  });
+
+  closeAdminScreen();
+  render();
+  showToast("Sessão encerrada.");
+}
+
 function loginCredentialsFromForm(form) {
   if (form === els.landingLoginForm) {
     return {
@@ -736,8 +766,8 @@ async function handlePasswordSetup(event) {
   const password = els.newPassword.value.trim();
   const confirmation = els.confirmPassword.value.trim();
 
-  if (!/^\d{4,8}$/.test(password)) {
-    showToast("A senha deve ter apenas números, com 4 a 8 dígitos.");
+  if (!/^\d{6,8}$/.test(password)) {
+    showToast("A senha deve ter apenas números, com 6 a 8 dígitos.");
     return;
   }
 
@@ -772,6 +802,10 @@ async function handleUserSubmit(event) {
   const pin = els.newUserPin.value.trim();
   if (!editingId && !pin) {
     showToast("Informe um PIN inicial para o usuário.");
+    return;
+  }
+  if (pin && !/^\d{6,8}$/.test(pin)) {
+    showToast("O PIN deve ter apenas números, com 6 a 8 dígitos.");
     return;
   }
 
@@ -992,7 +1026,7 @@ function resetUserForm() {
   els.userForm.reset();
   els.newUserRole.value = "professor";
   els.newUserRole.disabled = !isMaster();
-  els.newUserPin.placeholder = "Temporário para primeiro acesso";
+  els.newUserPin.placeholder = "6 a 8 dígitos temporários";
   els.userSubmitButton.textContent = isMaster() ? "Adicionar usuário" : "Adicionar professor";
   els.cancelUserEdit.classList.add("hidden");
 }
