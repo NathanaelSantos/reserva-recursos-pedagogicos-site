@@ -1182,20 +1182,130 @@ button {
 }
 
 @media (max-width: 860px) {
-  .topbar,
-  .toolbar {
+  .topbar {
     align-items: stretch;
     flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    position: static;
   }
 
-  .session-panel,
+  .brand h1 {
+    font-size: 1rem;
+    gap: 6px;
+  }
+
+  .beta-badge {
+    font-size: 0.56rem;
+    min-height: 18px;
+    padding: 2px 6px;
+  }
+
+  .session-panel {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+
+  .session-card {
+    grid-column: 1 / -1;
+    min-height: 32px;
+    min-width: 0;
+    padding: 5px 8px;
+  }
+
+  .session-card span {
+    font-size: 0.58rem;
+  }
+
+  .session-card strong {
+    font-size: 0.76rem;
+  }
+
+  .session-panel .button {
+    font-size: 0.78rem;
+    height: auto;
+    line-height: 1.1;
+    min-height: 34px;
+    padding: 6px 8px;
+    width: 100%;
+  }
+
+  .session-panel .button.primary {
+    grid-column: 1 / -1;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: 1fr;
+    margin-bottom: 6px;
+  }
+
   .month-controls {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: 32px minmax(86px, 1fr) 72px 32px 54px;
     justify-content: flex-start;
   }
 
   .brand {
     min-width: 0;
     width: 100%;
+  }
+
+  .toolbar .field {
+    gap: 2px;
+  }
+
+  .toolbar .field span {
+    font-size: 0.55rem;
+  }
+
+  .toolbar .field input,
+  .toolbar .field select,
+  .toolbar .button,
+  .toolbar .icon-button {
+    height: 30px;
+    min-height: 30px;
+  }
+
+  .toolbar .field input,
+  .toolbar .field select {
+    font-size: 0.82rem;
+    padding: 4px 7px;
+  }
+
+  .toolbar .button,
+  .toolbar .icon-button {
+    font-size: 0.78rem;
+    padding: 4px 6px;
+  }
+
+  .toolbar .icon-button,
+  #todayButton,
+  #monthSelect,
+  .year-field input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .status-row {
+    flex: none;
+    font-size: 0.64rem;
+    gap: 4px 7px;
+    margin: 0;
+  }
+
+  .status-row span {
+    gap: 4px;
+  }
+
+  .swatch {
+    height: 9px;
+    width: 12px;
   }
 
   .danger-zone,
@@ -1208,16 +1318,98 @@ button {
 
   .search-field {
     min-width: 0;
+    width: 100%;
   }
 
   .layout,
   .admin-screen {
-    padding: 14px;
+    padding: 6px;
   }
 
   .board-wrap {
-    height: calc(100vh - 285px);
+    border-left: 0;
+    border-right: 0;
+    height: calc(100vh - 235px);
+    height: calc(100svh - 235px);
     min-height: 320px;
+  }
+
+  .resource-corner {
+    font-size: 0.68rem;
+    height: 64px;
+    margin-bottom: -64px;
+    min-width: 132px;
+    width: 132px;
+  }
+
+  .booking-grid {
+    font-size: 0.68rem;
+  }
+
+  .booking-grid th,
+  .booking-grid td {
+    height: 50px;
+  }
+
+  .booking-grid thead tr:nth-child(2) th {
+    top: 34px;
+  }
+
+  .booking-grid .resource-head {
+    height: 64px !important;
+    min-width: 132px;
+    width: 132px;
+  }
+
+  .booking-grid .resource-cell {
+    min-width: 132px;
+    padding: 5px 4px;
+    width: 132px;
+  }
+
+  .booking-grid .group-cell,
+  .booking-grid .group-fill {
+    height: 26px;
+  }
+
+  .resource-name {
+    font-size: 0.7rem;
+  }
+
+  .resource-detail {
+    font-size: 0.56rem;
+    margin-top: 2px;
+  }
+
+  .day-header {
+    font-size: 0.7rem;
+    height: 34px !important;
+    min-width: 216px;
+    padding: 5px 4px !important;
+    width: 216px;
+  }
+
+  .shift-header {
+    font-size: 0.62rem;
+    height: 30px !important;
+    min-width: 72px;
+    width: 72px;
+  }
+
+  .slot {
+    min-width: 72px;
+    width: 72px;
+  }
+
+  .slot-button {
+    font-size: 0.62rem;
+    height: 50px;
+    padding: 3px;
+  }
+
+  .slot-button.reserved,
+  .slot-button .course {
+    font-size: 0.56rem;
   }
 
   .form-grid,
